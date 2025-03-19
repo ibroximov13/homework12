@@ -1,8 +1,9 @@
-const {totp} = require ("otplib")
-const bcrypt = require ("bcrypt")
+const { totp } = require("otplib")
+const bcrypt = require("bcrypt")
 // const {sendSms} = require("../config/eskiz")
-const jwt = require ("jsonwebtoken")
-const dotenv = require ("dotenv");
+const jwt = require("jsonwebtoken")
+const dotenv = require("dotenv");
+const { User } = require("../model")
 
 dotenv.config()
 
@@ -15,7 +16,7 @@ totp.options = {
     step: 300
 };
 
- async function sendOtp(req, res) {
+async function sendOtp(req, res) {
     const { phone } = req.body;
     const user = await findUser(phone);
     // if (user) {
@@ -26,7 +27,7 @@ totp.options = {
     res.send({ otp });
 }
 
- async function verifyOtp(req, res) {
+async function verifyOtp(req, res) {
     const { phone, otp } = req.body;
     const isValid = totp.verify({ token: otp, secret: phone + "soz" });
 
@@ -39,9 +40,9 @@ totp.options = {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
- async function register(req, res) {
+async function register(req, res) {
     const { name, phone, password, role } = req.body;
-    
+
     try {
         let existingUser = await User.findOne({ where: { phone } });
         // if (existingUser) {
@@ -51,16 +52,16 @@ const REFRESH_SECRET = process.env.REFRESH_SECRET;
         let photo = req.file ? req.file.filename : null;
         let hashedPassword = bcrypt.hashSync(password, 10);
 
-        let newUser = await User.create({ 
-            name, 
-            phone, 
-            password: hashedPassword, 
-            role, 
-            photo 
+        let newUser = await User.create({
+            name,
+            phone,
+            password: hashedPassword,
+            role,
+            photo
         });
 
         const accesstoken = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "1h" });
-        const refreshtoken = jwt.sign({ id: newUser.id}, REFRESH_SECRET, { expiresIn: "7D" });
+        const refreshtoken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: "7D" });
         refreshTokens.add(refreshtoken);
 
         res.status(201).json({ user: newUser, accesstoken, refreshtoken });
@@ -71,7 +72,7 @@ const REFRESH_SECRET = process.env.REFRESH_SECRET;
 }
 
 const refreshTokens = new Set();
- async function refreshToken(req, res) {
+async function refreshToken(req, res) {
     const { token } = req.body;
     if (!token || !refreshTokens.has(token)) {
         return res.status(403).send({ message: "Refresh token noto'g'ri yoki eskirgan" });
@@ -87,4 +88,4 @@ const refreshTokens = new Set();
     }
 }
 
-module.exports = {findUser, sendOtp, verifyOtp, register, refreshToken}
+module.exports = { findUser, sendOtp, verifyOtp, register, refreshToken }
