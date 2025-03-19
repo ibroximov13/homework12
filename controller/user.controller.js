@@ -41,27 +41,19 @@ async function verifyOtp(req, res) {
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 async function register(req, res) {
-    const { name, phone, password, role } = req.body;
-
     try {
+        const { fullName, year, phone, email, password, regionId, role } = req.body;
+
         let existingUser = await User.findOne({ where: { phone } });
-        // if (existingUser) {
-        //     return res.status(400).send({ message: "User already exists" });
-        // }
+        if (existingUser) {
+            return res.status(400).send({ message: "User already exists" });
+        }
 
-        let photo = req.file ? req.file.filename : null;
         let hashedPassword = bcrypt.hashSync(password, 10);
-
-        let newUser = await User.create({
-            name,
-            phone,
-            password: hashedPassword,
-            role,
-            photo
-        });
+        let newUser = await User.create({ fullName, year, phone, email, password: hashedPassword, regionId, role });
 
         const accesstoken = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "1h" });
-        const refreshtoken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: "7D" });
+        const refreshtoken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: "7d" });
         refreshTokens.add(refreshtoken);
 
         res.status(201).json({ user: newUser, accesstoken, refreshtoken });
@@ -70,6 +62,15 @@ async function register(req, res) {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 }
+
+async function uploadImage(req, res) {
+    if (!req.file) {
+        return res.status(400).json({ error: "Rasm yuklanishi kerak" });
+    }
+    res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", filename: req.file.filename });
+}
+
+
 
 const refreshTokens = new Set();
 async function refreshToken(req, res) {
@@ -88,4 +89,4 @@ async function refreshToken(req, res) {
     }
 }
 
-module.exports = { findUser, sendOtp, verifyOtp, register, refreshToken }
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken }
