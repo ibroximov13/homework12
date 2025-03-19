@@ -1,6 +1,7 @@
 const { Region } = require('../model');
 const logger = require('../logs/winston');
 const RegionValidation = require('../validation/region.validation');
+const { Op } = require('sequelize');
 
 exports.createRegion = async (req, res) => {
     try {
@@ -20,7 +21,24 @@ exports.createRegion = async (req, res) => {
 
 exports.getAllRegions = async (req, res) => {
     try {
-        const regions = await Region.findAll();
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const offset = (page - 1) * limit;
+
+        const name = req.query.name || "";
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const coulmn = req.query.coulmn || "id"
+
+        const regions = await Region.findAll({
+            where: {
+                name: {
+                    [Op.like]: `%${name}%`
+                }
+            },
+            limit: limit,
+            offset: offset,
+            order: [[coulmn, order]]
+        });
         logger.info('fetch all regions');
         res.status(200).json(regions);
     } catch (err) {
