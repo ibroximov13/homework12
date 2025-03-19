@@ -1,6 +1,7 @@
 const { Product, Category, User } = require('../model');
 const logger = require('../logs/winston');
 const { ProductValidationCreate } = require('../validation/product.validation');
+const { fn, col, Op } = require('sequelize');
 
 exports.createProduct = async (req, res) => {
     try {
@@ -20,8 +21,34 @@ exports.createProduct = async (req, res) => {
 
 exports.getAllProducts = async (req, res) => {
     try {
-        
-        const products = await Product.findAll({ include: [Category, User] });
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const offset = (page - 1) * limit;
+
+        const name = req.query.name || "";
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const column = req.query.column || "id";
+        const price = parseFloat(req.query.price) || 0;
+
+        const products = await Product.findAll({ 
+            include: [Category, User],
+            attributes: {
+                include: [
+                    [fn('AVG', col('comments')), "averageStar"]
+                ]
+            },
+            where: {
+                name: {
+                    [Op.like]: `%${name}%`
+                },
+                price: {
+                    [Op.gte]: price
+                }
+            },
+            limit: limit,
+            offset: offset,
+            order: [[column, order]]
+        });
         logger.info('All products fetch');
         res.status(200).json(products);
     } catch (err) {

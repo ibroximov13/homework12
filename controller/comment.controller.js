@@ -20,7 +20,25 @@ exports.createComment = async (req, res) => {
 
 exports.getAllComments = async (req, res) => {
     try {
-        const comments = await Comment.findAll({ include: [User, Product] });
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const offset = (page - 1) * limit;
+
+        const name = req.query.name || "";
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const column = req.query.column || "id"
+
+        const comments = await Comment.findAll({ 
+            include: [User, Product],
+            where: {
+                message: {
+                    [Op.like]: `%${name}%`
+                }
+            },
+            limit: limit,
+            offset: offset,
+            order: [[column, order]]
+        });
         logger.info('All comments fetche');
         res.status(200).json(comments);
     } catch (err) {

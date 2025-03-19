@@ -20,6 +20,13 @@ exports.createOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
     try {
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const offset = (page - 1) * limit;
+
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const column = req.query.column || "id"
+        
         const orders = await Order.findAll({
             include: [
                 { model: User, attributes: ["id", "fullname", "email", "phone"] },
@@ -27,7 +34,10 @@ exports.getAllOrders = async (req, res) => {
                     model: OrderItem,
                     include: [{ model: Product, attributes: ["id", "name", "price", "image"] }]
                 }
-            ]
+            ],
+            limit: limit,
+            offset: offset,
+            order: [[column, order]]
         });
         logger.info('All orders fetch');
         res.status(200).json(orders);

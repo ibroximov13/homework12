@@ -1,0 +1,6 @@
+2025-03-19 18:29:30 [ERROR]: Cannot read properties of undefined (reading 'price')
+2025-03-19 18:29:30 [ERROR]: Cannot read properties of undefined (reading 'price')
+2025-03-19 18:30:45 [ERROR]: Cannot read properties of undefined (reading 'price')
+2025-03-19 18:30:47 [ERROR]: Cannot read properties of undefined (reading 'price')
+2025-03-19 18:31:36 [ERROR]: Unknown column 'comments' in 'field list'
+2025-03-19 18:32:15 [INFO]: fetch all regions
