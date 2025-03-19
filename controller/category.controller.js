@@ -4,6 +4,7 @@ const { CategoryValidationCreate } = require('../validation/category.validation'
 
 exports.createCategory = async (req, res) => {
     try {
+        
         const { error, value } = CategoryValidationCreate.validate(req.body);
         if (error) {
             logger.warn(`validation error: ${error.details[0].message}`);
