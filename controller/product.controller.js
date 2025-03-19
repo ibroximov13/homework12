@@ -20,6 +20,7 @@ exports.createProduct = async (req, res) => {
 
 exports.getAllProducts = async (req, res) => {
     try {
+        
         const products = await Product.findAll({ include: [Category, User] });
         logger.info('All products fetch');
         res.status(200).json(products);
