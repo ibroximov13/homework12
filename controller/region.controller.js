@@ -4,13 +4,16 @@ const RegionValidation = require('../validation/region.validation');
 
 exports.createRegion = async (req, res) => {
     try {
-        let {error, value} = RegionValidation.validate(req.body);
+        let { error, value } = RegionValidation.validate(req.body);
         if (error) {
+            logger.warn(`error: ${error.details[0].message}`);
             return res.status(400).send(error.details[0].message);
         }
         const region = await Region.create(value);
+        logger.info('region create');
         res.status(201).json(region);
     } catch (err) {
+        logger.error(`create region error: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -18,8 +21,10 @@ exports.createRegion = async (req, res) => {
 exports.getAllRegions = async (req, res) => {
     try {
         const regions = await Region.findAll();
+        logger.info('fetch all regions');
         res.status(200).json(regions);
     } catch (err) {
+        logger.error(`regions error: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -28,24 +33,35 @@ exports.getRegionById = async (req, res) => {
     try {
         const { id } = req.params;
         const region = await Region.findByPk(id);
-        if (!region) return res.status(404).json({ message: "Region not found" });
+        if (!region) {
+            logger.warn(`region with id ${id} not found`);
+            return res.status(404).json({ message: "region not found" });
+        }
+        logger.info(`fetch region by id: ${id}`);
         res.status(200).json(region);
     } catch (err) {
+        logger.error(`error: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
 
 exports.updateRegion = async (req, res) => {
     try {
-        let {error, value} = RegionValidation.validate(req.body);
+        let { error, value } = RegionValidation.validate(req.body);
         if (error) {
+            logger.warn(`error: ${error.details[0].message}`);
             return res.status(400).send(error.details[0].message);
         }
         const region = await Region.findByPk(req.params.id);
-        if (!region) return res.status(404).json({ message: "Region not found" });
+        if (!region) {
+            logger.warn(`region with id ${req.params.id} not found for update`);
+            return res.status(404).json({ message: "region not found" });
+        }
         await region.update(value);
+        logger.info(`region update with id: ${req.params.id}`);
         res.status(200).json(region);
     } catch (err) {
+        logger.error(`error: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -53,10 +69,15 @@ exports.updateRegion = async (req, res) => {
 exports.deleteRegion = async (req, res) => {
     try {
         const region = await Region.findByPk(req.params.id);
-        if (!region) return res.status(404).json({ message: "Region not found" });
+        if (!region) {
+            logger.warn(`region with id ${req.params.id} not found for delete`);
+            return res.status(404).json({ message: "region not found" });
+        }
         await region.destroy();
-        res.status(200).json({ message: "Region deleted" });
+        logger.info(`region delete with id: ${req.params.id}`);
+        res.status(200).json({ message: "region delete" });
     } catch (err) {
+        logger.error(`error: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };

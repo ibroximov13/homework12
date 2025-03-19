@@ -4,13 +4,16 @@ const OrderValidation = require('../validation/order.validation');
 
 exports.createOrder = async (req, res) => {
     try {
-        let {error, value} = OrderValidation.validate(req.body);
+        let { error, value } = OrderValidation.validate(req.body);
         if (error) {
+            logger.warn(error.details[0].message);
             return res.status(400).send(error.details[0].message);
         }
         const order = await Order.create(value);
+        logger.info('order create');
         res.status(201).json(order);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -26,8 +29,10 @@ exports.getAllOrders = async (req, res) => {
                 }
             ]
         });
+        logger.info('All orders fetch');
         res.status(200).json(orders);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -43,9 +48,14 @@ exports.getOrderById = async (req, res) => {
                 }
             ]
         });
-        if (!order) return res.status(404).json({ message: "Order not found" });
+        if (!order) {
+            logger.warn('order not found');
+            return res.status(404).json({ message: "order not found" });
+        }
+        logger.info('order fetch by ID');
         res.status(200).json(order);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -63,23 +73,31 @@ exports.getOrdersByUserId = async (req, res) => {
                 }
             ]
         });
+        logger.info(`order fetch by user ID: ${user_id}`);
         res.status(200).json(orders);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ message: err.message });
     }
 };
 
 exports.updateOrder = async (req, res) => {
     try {
-        let {error, value} = OrderValidation.validate(req.body);
+        let { error, value } = OrderValidation.validate(req.body);
         if (error) {
+            logger.warn(error.details[0].message);
             return res.status(400).send(error.details[0].message);
         }
         const order = await Order.findByPk(req.params.id);
-        if (!order) return res.status(404).json({ message: "Order not found" });
+        if (!order) {
+            logger.warn('order not found for update');
+            return res.status(404).json({ message: "rder not found" });
+        }
         await order.update(value);
+        logger.info('order update');
         res.status(200).json(order);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -87,10 +105,15 @@ exports.updateOrder = async (req, res) => {
 exports.deleteOrder = async (req, res) => {
     try {
         const order = await Order.findByPk(req.params.id);
-        if (!order) return res.status(404).json({ message: "Order not found" });
+        if (!order) {
+            logger.warn('order not found for delete');
+            return res.status(404).json({ message: "order not found" });
+        }
         await order.destroy();
-        res.status(200).json({ message: "Order deleted" });
+        logger.info('order delete');
+        res.status(200).json({ message: "order delete" });
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -102,8 +125,10 @@ exports.getOrderItemsByOrderId = async (req, res) => {
             where: { order_id },
             include: [Order, Product]
         });
+        logger.info(`order items fetch by order ID: ${order_id}`);
         res.status(200).json(orderItems);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -115,10 +140,10 @@ exports.getOrderItemsByProductId = async (req, res) => {
             where: { product_id },
             include: [Order, Product]
         });
+        logger.info(`order items fetch by product ID: ${product_id}`);
         res.status(200).json(orderItems);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
-
-//orderItem qoshish kerak post
