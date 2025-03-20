@@ -86,13 +86,21 @@ async function register(req, res) {
         console.log(value);
         const { fullName, year, phone, email, password, region_id, role } = value;
 
+        if (role && (role.toUpperCase() === "ADMIN" || role.toUpperCase() === "SUPERADMIN")) {
+            return res.status(403).send({ message: "Siz bu rolni tanlay olmaysiz!" });
+        }
+
         let existingUser = await User.findOne({ where: { phone } });
         if (existingUser) {
             return res.status(400).send({ message: "User already exists" });
         }
 
         let hashedPassword = bcrypt.hashSync(password, 10);
-        let newUser = await User.create({ fullName, year, phone, email, password: hashedPassword, region_id, role });
+        let newUser = await User.create({
+            fullName, year, phone, email,
+            password: hashedPassword, region_id,
+            role
+        });
 
         res.status(201).json({ user: newUser });
     } catch (error) {
@@ -156,4 +164,32 @@ async function refreshToken(req, res) {
     }
 }
 
-module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser }
+async function createSuperAdmin(req, res) {
+    try {
+        const { fullName, year, phone, email, password, region_id } = req.body;
+
+        if (req.user.role !== "ADMIN") {
+            return res.status(403).send({ message: "SuperAdmin yaratishga ruxsatingiz yo'q!" });
+        }
+
+        let existingUser = await User.findOne({ where: { phone } });
+        if (existingUser) {
+            return res.status(400).send({ message: "User already exists" });
+        }
+
+        let hashedPassword = bcrypt.hashSync(password, 10);
+        let newSuperAdmin = await User.create({
+            fullName, year, phone, email,
+            password: hashedPassword, region_id,
+            role: "SUPERADMIN"
+        });
+
+        res.status(201).json({ user: newSuperAdmin });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+}
+
+
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, createSuperAdmin }

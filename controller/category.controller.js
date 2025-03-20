@@ -19,6 +19,14 @@ exports.createCategory = async (req, res) => {
     }
 };
 
+exports.uploadImage = async(req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: "Rasm yuklanishi kerak" });
+    }
+    res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", filename: req.file.filename });
+}
+
+
 exports.getAllCategories = async (req, res) => {
     try {
         const page = req.query.page || 1;
