@@ -1,47 +1,73 @@
 const { totp } = require("otplib")
 const bcrypt = require("bcrypt")
-// const {sendSms} = require("../config/eskiz")
+// const { sendSms } = require("../config/eskiz")
+const nodemailer = require('nodemailer')
 const jwt = require("jsonwebtoken")
 const dotenv = require("dotenv");
 const { User } = require("../model");
 const { createUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate } = require("../validation/user.validation");
 dotenv.config()
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const REFRESH_SECRET = process.env.REFRESH_SECRET;
-
-
-async function findUser(phone) {
-    return await User.findOne({ where: { phone } });
-}
-
 totp.options = {
     digits: 4,
     step: 300
 };
 
-async function sendOtp(req, res) {
-    let {error, value} = sendOtpValidate(req.body);
-    if(error) {
-        return res.status(400).send(error.details[0].message);
-    }
-    const { phone } = value;
-    const user = await findUser(phone);
-    // if (user) {
-    //     return res.status(400).send({ message: "User exists" });
-    // }
-    let otp = totp.generate(phone + "soz");
-    // await sendSms(phone, otp);
-    res.send({ otp });
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+const SECRET_KEY = 'xusniddin';
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+
+async function findUser(phone) {
+    return await User.findOne({ where: { phone } });
 }
 
-async function verifyOtp(req, res) {
-    let {error, value} = verifyOtpValidate(req.body);
+async function sendOtp(req, res) {
+    let { error, value } = sendOtpValidate(req.body);
     if (error) {
         return res.status(400).send(error.details[0].message);
     }
-    let { phone, otp } = value;
-    const isValid = totp.verify({ token: otp, secret: phone + "soz" });
+
+    const { phone, email } = value;
+    let otp = totp.generate((phone || email) + "soz");
+
+    if (phone) {
+        // await sendSms(phone, otp);
+        res.send({ message: "OTP telefon orqali yuborildi", otp });
+    } else if (email) {
+        try {
+            await transporter.sendMail({
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: "Sizning OTP kodingiz",
+                text: `Sizning tasdiqlash kodingiz: ${otp}`,
+            });
+
+            res.send({ message: "OTP email orqali yuborildi", otp });
+        } catch (error) {
+            console.error("Email jo'natishda xatolik:", error);
+            res.status(500).send({ message: "Email jo'natishda xatolik yuz berdi" });
+        }
+    } else {
+        res.status(400).send({ message: "Telefon raqam yoki email talab qilinadi" });
+    }
+}
+
+async function verifyOtp(req, res) {
+    let { error, value } = verifyOtpValidate(req.body);
+    if (error) {
+        return res.status(400).send(error.details[0].message);
+    }
+    let { phone, email, otp } = value;
+    const secret = (phone || email) + "soz";
+    const isValid = totp.verify({ token: otp, secret });
 
     if (isValid) {
         res.send({ message: "OTP verified successfully" });
@@ -52,8 +78,8 @@ async function verifyOtp(req, res) {
 
 async function register(req, res) {
     try {
-        let {error, value} = createUserValidate(req.body);
-        if (error) { 
+        let { error, value } = createUserValidate(req.body);
+        if (error) {
             return res.status(400).send(error.details[0].message);
         }
         console.log(value);
@@ -76,26 +102,26 @@ async function register(req, res) {
 
 async function loginUser(req, res) {
     try {
-        let {error, value} = userLoginValidate(req.body);
+        let { error, value } = userLoginValidate(req.body);
         if (error) {
             return res.status(400).send(error.details[0].message);
         }
-        let {phone, password} = value;
-        let newUser = await User.findOne({where: {phone}});
+        let { phone, password } = value;
+        let newUser = await User.findOne({ where: { phone } });
         if (!newUser) {
-            return res.status(404).send({message: "User not found"});
+            return res.status(404).send({ message: "User not found" });
         };
         let compiredPassword = bcrypt.compareSync(password, newUser.password);
         if (!compiredPassword) {
-            return res.status(400).send({message: "Password wrong error"});
+            return res.status(400).send({ message: "Password wrong error" });
         }
 
         const accesstoken = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "1h" });
         const refreshtoken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: "7d" });
         refreshTokens.add(refreshtoken);
 
-        res.send({accesstoken, refreshtoken});
-        
+        res.send({ accesstoken, refreshtoken });
+
     } catch (error) {
         console.log(error);
     }
@@ -108,11 +134,9 @@ async function uploadImage(req, res) {
     res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", filename: req.file.filename });
 }
 
-
-
 const refreshTokens = new Set();
 async function refreshToken(req, res) {
-    let {error, value} = refreshTokenValidate(req.body);
+    let { error, value } = refreshTokenValidate(req.body);
     if (error) {
         return res.status(400).send(error.details[0].message)
     }
