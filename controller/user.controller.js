@@ -141,13 +141,18 @@ async function loginUser(req, res) {
         console.log(error);
     }
 }
-
-async function uploadImage(req, res) {
-    if (!req.file) {
-        return res.status(400).json({ error: "Rasm yuklanishi kerak" });
+const uploadImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "Rasm yuklanishi kerak" });
+        }
+        const imageUrl = `${req.protocol}://${req.get("host")}/image/${req.file.filename}`;
+        res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", url: imageUrl });
+    } catch (error) {
+        res.status(500).json({ error: "Serverda xatolik yuz berdi" });
     }
-    res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", filename: req.file.filename });
-}
+};
+
 
 const refreshTokens = new Set();
 async function refreshToken(req, res) {
@@ -233,4 +238,4 @@ async function deleteUser(req, res) {
     }
 }
 
-module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser }
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser, uploadImage }

@@ -5,6 +5,8 @@ const app = express();
 app.use(express.json());
 connectDb();
 
+app.use("/image", express.static("uploadsUserImage"));
+
 const indexRoute = require("./routes/index");
 app.use("/", indexRoute);
 

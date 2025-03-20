@@ -7,7 +7,7 @@ router.get('/',verifyToken, orderController.getAllOrders);
 router.get('/:id',verifyToken, orderController.getOrderById);
 router.get('/by-user/:user_id',verifyToken, orderController.getOrdersByUserId);
 router.post('/',verifyToken, orderController.createOrder);
-router.patch('/:id',verifyToken, orderController.patchOrder);  
+router.patch('/:id',verifyToken, orderController.updateOrder);  
 router.delete('/:id',verifyToken, orderController.deleteOrder);
 
 router.post("/order-item", orderController.createOrderItem);
