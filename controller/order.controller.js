@@ -101,10 +101,26 @@ exports.updateOrder = async (req, res) => {
         const order = await Order.findByPk(req.params.id);
         if (!order) {
             logger.warn('order not found for update');
-            return res.status(404).json({ message: "rder not found" });
+            return res.status(404).json({ message: "order not found" });
         }
         await order.update(value);
         logger.info('order update');
+        res.status(200).json(order);
+    } catch (err) {
+        logger.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.patchOrder = async (req, res) => {
+    try {
+        const order = await Order.findByPk(req.params.id);
+        if (!order) {
+            logger.warn('order not found for patch');
+            return res.status(404).json({ message: "order not found" });
+        }
+        await order.update(req.body);
+        logger.info('order patched');
         res.status(200).json(order);
     } catch (err) {
         logger.error(err.message);
@@ -121,7 +137,7 @@ exports.deleteOrder = async (req, res) => {
         }
         await order.destroy();
         logger.info('order delete');
-        res.status(200).json({ message: "order delete" });
+        res.status(200).json({ message: "order deleted" });
     } catch (err) {
         logger.error(err.message);
         res.status(500).json({ error: err.message });

@@ -10,7 +10,7 @@ exports.createComment = async (req, res) => {
             return res.status(400).send(error.details[0].message);
         }
         const comment = await Comment.create(value);
-        logger.info('comment create');
+        logger.info('Comment created');
         res.status(201).json(comment);
     } catch (err) {
         logger.error(err.message);
@@ -20,25 +20,7 @@ exports.createComment = async (req, res) => {
 
 exports.getAllComments = async (req, res) => {
     try {
-        const page = req.query.page || 1;
-        const limit = req.query.limit || 10;
-        const offset = (page - 1) * limit;
-
-        const name = req.query.name || "";
-        const order = req.query.order === "DESC" ? "DESC" : "ASC";
-        const column = req.query.column || "id"
-
-        const comments = await Comment.findAll({ 
-            include: [User, Product],
-            where: {
-                message: {
-                    [Op.like]: `%${name}%`
-                }
-            },
-            limit: limit,
-            offset: offset,
-            order: [[column, order]]
-        });
+        const comments = await Comment.findAll({ include: [User, Product] });
         logger.info('All comments fetche');
         res.status(200).json(comments);
     } catch (err) {
@@ -52,9 +34,9 @@ exports.getCommentById = async (req, res) => {
         const comment = await Comment.findByPk(req.params.id, { include: [User, Product] });
         if (!comment) {
             logger.warn('comment not found');
-            return res.status(404).json({ message: "comment not found" });
+            return res.status(404).json({ message: "Comment not found" });
         }
-        logger.info('comment fetche by ID');
+        logger.info('Comment fetch by ID');
         res.status(200).json(comment);
     } catch (err) {
         logger.error(err.message);
@@ -69,7 +51,7 @@ exports.getCommentsByUserId = async (req, res) => {
             where: { user_id },
             include: [User, Product]
         });
-        logger.info('comment fetched by user ID');
+        logger.info('Comment fetch by user ID');
         res.status(200).json(comments);
     } catch (err) {
         logger.error(err.message);
@@ -84,7 +66,7 @@ exports.getCommentsByProductId = async (req, res) => {
             where: { product_id },
             include: [User, Product]
         });
-        logger.info('comment fetched by product ID');
+        logger.info('Comment fetch by product ID');
         res.status(200).json(comments);
     } catch (err) {
         logger.error(err.message);
@@ -101,7 +83,7 @@ exports.updateComment = async (req, res) => {
         }
         const comment = await Comment.findByPk(req.params.id);
         if (!comment) {
-            logger.warn('comment not found for update');
+            logger.warn('Comment not found for update');
             return res.status(404).json({ message: "comment not found" });
         }
         await comment.update(value);
@@ -113,15 +95,31 @@ exports.updateComment = async (req, res) => {
     }
 };
 
+exports.patchComment = async (req, res) => {
+    try {
+        const comment = await Comment.findByPk(req.params.id);
+        if (!comment) {
+            logger.warn('comment not found for patch');
+            return res.status(404).json({ message: "comment not found" });
+        }
+        await comment.update(req.body);
+        logger.info('comment patch');
+        res.status(200).json(comment);
+    } catch (err) {
+        logger.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.deleteComment = async (req, res) => {
     try {
         const comment = await Comment.findByPk(req.params.id);
         if (!comment) {
-            logger.warn('Comment not found ');
+            logger.warn('comment not found for delete');
             return res.status(404).json({ message: "comment not found" });
         }
         await comment.destroy();
-        logger.info('comment delete');
+        logger.info('comment delet');
         res.status(200).json({ message: "comment delete" });
     } catch (err) {
         logger.error(err.message);

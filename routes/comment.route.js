@@ -7,6 +7,7 @@ router.get('/by-user/:user_id', commentController.getCommentsByUserId);
 router.get('/by-product/:product_id', commentController.getCommentsByProductId);
 router.post('/', commentController.createComment);
 router.put('/:id', commentController.updateComment);
+router.patch('/:id', commentController.patchComment);
 router.delete('/:id', commentController.deleteComment);
 
 module.exports = router;
