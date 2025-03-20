@@ -1,6 +1,7 @@
 const { Order, OrderItem, Product, User } = require('../model');
 const logger = require('../logs/winston');
 const OrderValidation = require('../validation/order.validation');
+const { OrderItemValidationCreate } = require('../validation/orderItem.validation');
 
 exports.createOrder = async (req, res) => {
     try {
@@ -112,22 +113,6 @@ exports.updateOrder = async (req, res) => {
     }
 };
 
-exports.patchOrder = async (req, res) => {
-    try {
-        const order = await Order.findByPk(req.params.id);
-        if (!order) {
-            logger.warn('order not found for patch');
-            return res.status(404).json({ message: "order not found" });
-        }
-        await order.update(req.body);
-        logger.info('order patched');
-        res.status(200).json(order);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
-
 exports.deleteOrder = async (req, res) => {
     try {
         const order = await Order.findByPk(req.params.id);
@@ -173,3 +158,19 @@ exports.getOrderItemsByProductId = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.createOrderItem = async(req, res) => {
+    try {
+        let {error, value} = OrderItemValidationCreate.validate(req.body);
+        if (error) {
+            logger.warn(error.details[0].message)
+            return res.status(400).send(error.details[0].message);
+        }
+        let orderItem = await OrderItem.create(value);
+        logger.info(`order item created!`);
+        res.status(201).send(orderItem);
+    } catch (error) {
+        logger.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+}

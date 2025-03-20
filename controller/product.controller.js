@@ -1,6 +1,6 @@
 const { Product, Category, User } = require('../model');
 const logger = require('../logs/winston');
-const { ProductValidationCreate } = require('../validation/product.validation');
+const { ProductValidationCreate, ProductPatchValidation } = require('../validation/product.validation');
 const { fn, col, Op } = require('sequelize');
 
 exports.createProduct = async (req, res) => {
@@ -125,12 +125,16 @@ exports.updateProduct = async (req, res) => {
 
 exports.patchProduct = async (req, res) => {
     try {
+        let {error, value} = ProductPatchValidation.validate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        }
         const product = await Product.findByPk(req.params.id);
         if (!product) {
             logger.warn('product not found for patch');
             return res.status(404).json({ message: "product not found" });
         }
-        await product.update(req.body); 
+        await product.update(value); 
         logger.info('product patched');
         res.status(200).json(product);
     } catch (err) {

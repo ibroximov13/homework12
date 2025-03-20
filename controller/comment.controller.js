@@ -1,6 +1,6 @@
 const { Comment, User, Product } = require('../model');
 const logger = require('../logs/winston');
-const { CommentValidationCreate } = require('../validation/comment.validation');
+const { CommentValidationCreate, CommentPatchValidation } = require('../validation/comment.validation');
 
 exports.createComment = async (req, res) => {
     try {
@@ -97,12 +97,16 @@ exports.updateComment = async (req, res) => {
 
 exports.patchComment = async (req, res) => {
     try {
+        let {error, value} = CommentPatchValidation.validate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        }
         const comment = await Comment.findByPk(req.params.id);
         if (!comment) {
             logger.warn('comment not found for patch');
             return res.status(404).json({ message: "comment not found" });
         }
-        await comment.update(req.body);
+        await comment.update(value);
         logger.info('comment patch');
         res.status(200).json(comment);
     } catch (err) {

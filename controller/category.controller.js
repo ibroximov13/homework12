@@ -1,7 +1,7 @@
 const logger = require('../logs/winston').child({ module: "category" });
 const { Op } = require('sequelize');
 const { Category } = require('../model');
-const { CategoryValidationCreate } = require('../validation/category.validation');
+const { CategoryValidationCreate, CategoryPatchValidation } = require('../validation/category.validation');
 
 exports.createCategory = async (req, res) => {
     try {
@@ -86,8 +86,12 @@ exports.updateCategory = async (req, res) => {
 
 exports.patchCategory = async (req, res) => {
     try {
+        let {error, value} = CategoryPatchValidation.validate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        }
         const { id } = req.params;
-        const { name, image } = req.body;
+        const { name, image } = value;
         const category = await Category.findByPk(id);
         if (!category) {
             logger.warn(`category with ID ${id} not found for patch`);
