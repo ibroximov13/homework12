@@ -7,6 +7,7 @@ router.get('/:id',verifyToken, commentController.getCommentById);
 router.get('/by-user/:user_id',verifyToken, commentController.getCommentsByUserId);
 router.get('/by-product/:product_id',verifyToken, commentController.getCommentsByProductId);
 router.post('/',verifyToken, commentController.createComment);
+router.patch('/:id',verifyToken, commentController.patchComment);
 router.put('/:id',verifyToken, commentController.updateComment);
 router.delete('/:id',verifyToken, commentController.deleteComment);
 

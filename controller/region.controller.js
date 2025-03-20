@@ -84,6 +84,22 @@ exports.updateRegion = async (req, res) => {
     }
 };
 
+exports.patchRegion = async (req, res) => {
+    try {
+        const region = await Region.findByPk(req.params.id);
+        if (!region) {
+            logger.warn(`region with id ${req.params.id} not found for patch`);
+            return res.status(404).json({ message: "region not found" });
+        }
+        await region.update(req.body);
+        logger.info(`region patched with id: ${req.params.id}`);
+        res.status(200).json(region);
+    } catch (err) {
+        logger.error(`patch region error: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.deleteRegion = async (req, res) => {
     try {
         const region = await Region.findByPk(req.params.id);

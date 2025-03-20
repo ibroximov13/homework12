@@ -84,6 +84,29 @@ exports.updateCategory = async (req, res) => {
     }
 };
 
+exports.patchCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, image } = req.body;
+        const category = await Category.findByPk(id);
+        if (!category) {
+            logger.warn(`category with ID ${id} not found for patch`);
+            return res.status(404).json({ message: "category not found" });
+        }
+
+        await category.update({
+            name: name || category.name,
+            image: image || category.image,
+        });
+
+        logger.info(`category patched with ID: ${category.id}`);
+        res.status(200).json(category);
+    } catch (err) {
+        logger.error(`error patching category: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.deleteCategory = async (req, res) => {
     try {
         const category = await Category.findByPk(req.params.id);

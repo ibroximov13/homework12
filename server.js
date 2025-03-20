@@ -5,7 +5,6 @@ const app = express();
 app.use(express.json());
 connectDb();
 
-
 const indexRoute = require("./routes/index");
 app.use("/", indexRoute);
 
