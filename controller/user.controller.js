@@ -3,7 +3,11 @@ const bcrypt = require("bcrypt")
 // const {sendSms} = require("../config/eskiz")
 const jwt = require("jsonwebtoken")
 const dotenv = require("dotenv");
-const { User } = require("../model")
+const { User } = require("../model");
+const { createUserValidate, sendOtpValidate } = require("../validation/user.validation");
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
 dotenv.config()
 
@@ -17,7 +21,11 @@ totp.options = {
 };
 
 async function sendOtp(req, res) {
-    const { phone } = req.body;
+    let {error, value} = sendOtpValidate(req.body);
+    if(error) {
+        return res.status(400).send(error.details[0].message);
+    }
+    const { phone } = value;
     const user = await findUser(phone);
     // if (user) {
     //     return res.status(400).send({ message: "User exists" });
@@ -38,11 +46,13 @@ async function verifyOtp(req, res) {
     }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const REFRESH_SECRET = process.env.REFRESH_SECRET;
 async function register(req, res) {
     try {
-        const { fullName, year, phone, email, password, regionId, role } = req.body;
+        let {error, value} = createUserValidate(req.body);
+        if (error) { 
+            return res.status(400).send(error.details[0].message);
+        }
+        const { fullName, year, phone, email, password, regionId, role } = value;
 
         let existingUser = await User.findOne({ where: { phone } });
         if (existingUser) {
