@@ -6,7 +6,11 @@ const app = express();
 require("dotenv").config()
 app.use(express.json());
 
-app.use("/image", express.static("uploadsUserImage"));
+app.use("/image", [
+    express.static("uploadsUserImage"),
+    express.static("uploadsCategoryImage"),
+    express.static("uploadsProductImage")
+]);
 
 const indexRoute = require("./routes/index");
 app.use("/", indexRoute);
