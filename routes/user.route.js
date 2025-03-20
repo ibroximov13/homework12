@@ -1,6 +1,7 @@
 const { Router } = require("express")
-const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser } = require("../controller/user.controller")
-const upload = require("../multer/user.multer")
+const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser,createSuperAdmin, getAllUsers, updateUser, deleteUser } = require("../controller/user.controller")
+const upload = require("../multer/user.multer");
+const verifyRole = require("../middlewares/verifyRole");
 
 const router = Router();
 
@@ -13,5 +14,7 @@ router.post("/refresh", refreshToken);
 router.get("/", getAllUsers);
 router.patch("/:id", updateUser);
 router.delete("/:id", deleteUser)
+router.post("/create-superadmin", verifyRole(['ADMIN']), createSuperAdmin);
+
 
 module.exports = router;
