@@ -36,27 +36,28 @@ async function sendOtp(req, res) {
     }
 
     const { phone, email } = value;
-    let otp = totp.generate((phone || email) + "soz");
 
-    if (phone) {
+    if (!phone || !email) {
+        return res.status(400).send({ message: "Telefon raqam va email majburiy!" });
+    }
+
+    let otp = totp.generate(phone + email + "soz");
+
+    try {
         // await sendSms(phone, otp);
-        res.send({ message: "OTP telefon orqali yuborildi", otp });
-    } else if (email) {
-        try {
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: "Sizning OTP kodingiz",
-                text: `Sizning tasdiqlash kodingiz: ${otp}`,
-            });
 
-            res.send({ message: "OTP email orqali yuborildi", otp });
-        } catch (error) {
-            console.error("Email jo'natishda xatolik:", error);
-            res.status(500).send({ message: "Email jo'natishda xatolik yuz berdi" });
-        }
-    } else {
-        res.status(400).send({ message: "Telefon raqam yoki email talab qilinadi" });
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Sizning OTP kodingiz",
+            text: `Sizning tasdiqlash kodingiz: ${otp}`,
+        });
+
+        res.send({ message: "OTP telefon va email orqali yuborildi", otp });
+
+    } catch (error) {
+        console.error("OTP jo'natishda xatolik:", error);
+        res.status(500).send({ message: "OTP jo'natishda xatolik yuz berdi" });
     }
 }
 
