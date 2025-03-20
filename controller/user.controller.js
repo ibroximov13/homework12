@@ -4,12 +4,12 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const dotenv = require("dotenv");
 const { User } = require("../model");
-const { createUserValidate, sendOtpValidate } = require("../validation/user.validation");
+const { createUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate } = require("../validation/user.validation");
+dotenv.config()
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
-dotenv.config()
 
 async function findUser(phone) {
     return await User.findOne({ where: { phone } });
@@ -36,7 +36,11 @@ async function sendOtp(req, res) {
 }
 
 async function verifyOtp(req, res) {
-    const { phone, otp } = req.body;
+    let {error, value} = verifyOtpValidate(req.body);
+    if (error) {
+        return res.status(400).send(error.details[0].message);
+    }
+    let { phone, otp } = value;
     const isValid = totp.verify({ token: otp, secret: phone + "soz" });
 
     if (isValid) {
@@ -52,7 +56,8 @@ async function register(req, res) {
         if (error) { 
             return res.status(400).send(error.details[0].message);
         }
-        const { fullName, year, phone, email, password, regionId, role } = value;
+        console.log(value);
+        const { fullName, year, phone, email, password, region_id, role } = value;
 
         let existingUser = await User.findOne({ where: { phone } });
         if (existingUser) {
@@ -60,16 +65,39 @@ async function register(req, res) {
         }
 
         let hashedPassword = bcrypt.hashSync(password, 10);
-        let newUser = await User.create({ fullName, year, phone, email, password: hashedPassword, regionId, role });
+        let newUser = await User.create({ fullName, year, phone, email, password: hashedPassword, region_id, role });
+
+        res.status(201).json({ user: newUser });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+}
+
+async function loginUser(req, res) {
+    try {
+        let {error, value} = userLoginValidate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        }
+        let {phone, password} = value;
+        let newUser = await User.findOne({where: {phone}});
+        if (!newUser) {
+            return res.status(404).send({message: "User not found"});
+        };
+        let compiredPassword = bcrypt.compareSync(password, newUser.password);
+        if (!compiredPassword) {
+            return res.status(400).send({message: "Password wrong error"});
+        }
 
         const accesstoken = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: "1h" });
         const refreshtoken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: "7d" });
         refreshTokens.add(refreshtoken);
 
-        res.status(201).json({ user: newUser, accesstoken, refreshtoken });
+        res.send({accesstoken, refreshtoken});
+        
     } catch (error) {
-        console.error(error);
-        return res.status(500).send({ message: "Internal Server Error" });
+        console.log(error);
     }
 }
 
@@ -84,7 +112,11 @@ async function uploadImage(req, res) {
 
 const refreshTokens = new Set();
 async function refreshToken(req, res) {
-    const { token } = req.body;
+    let {error, value} = refreshTokenValidate(req.body);
+    if (error) {
+        return res.status(400).send(error.details[0].message)
+    }
+    const { token } = value;
     if (!token || !refreshTokens.has(token)) {
         return res.status(403).send({ message: "Refresh token noto'g'ri yoki eskirgan" });
     }
@@ -99,4 +131,4 @@ async function refreshToken(req, res) {
     }
 }
 
-module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken }
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser }
