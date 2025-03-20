@@ -6,10 +6,5 @@ const OrderItemValidationCreate = Joi.object({
     count: Joi.number().integer().required(),
 });
 
-const OrderItemPatchValidation = Joi.object({
-    order_id: Joi.number().integer().optional(),
-    product_id: Joi.number().integer().optional(),
-    count: Joi.number().integer().optional(),
-});
 
-module.exports = { OrderItemValidationCreate, OrderItemPatchValidation}
+module.exports = { OrderItemValidationCreate}

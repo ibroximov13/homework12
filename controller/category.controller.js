@@ -63,27 +63,6 @@ exports.getCategoryById = async (req, res) => {
     }
 };
 
-exports.updateCategory = async (req, res) => {
-    try {
-        const { error, value } = CategoryValidationCreate.validate(req.body);
-        if (error) {
-            logger.warn(`Validation error: ${error.details[0].message}`);
-            return res.status(400).send(error.details[0].message);
-        }
-        const category = await Category.findByPk(req.params.id);
-        if (!category) {
-            logger.warn(`category with ID ${req.params.id} not found for update`);
-            return res.status(404).json({ message: "category not found" });
-        }
-        await category.update(value);
-        logger.info(`category updated with ID: ${category.id}`);
-        res.status(200).json(category);
-    } catch (err) {
-        logger.error(`error: ${err.message}`);
-        res.status(500).json({ error: err.message });
-    }
-};
-
 exports.patchCategory = async (req, res) => {
     try {
         let {error, value} = CategoryPatchValidation.validate(req.body);

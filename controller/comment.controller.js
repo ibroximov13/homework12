@@ -74,26 +74,6 @@ exports.getCommentsByProductId = async (req, res) => {
     }
 };
 
-exports.updateComment = async (req, res) => {
-    try {
-        const { error, value } = CommentValidationCreate.validate(req.body);
-        if (error) {
-            logger.warn(error.details[0].message);
-            return res.status(400).send(error.details[0].message);
-        }
-        const comment = await Comment.findByPk(req.params.id);
-        if (!comment) {
-            logger.warn('Comment not found for update');
-            return res.status(404).json({ message: "comment not found" });
-        }
-        await comment.update(value);
-        logger.info('Comment update');
-        res.status(200).json(comment);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
 
 exports.patchComment = async (req, res) => {
     try {

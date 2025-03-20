@@ -12,7 +12,7 @@ const User = db.define("users", {
     allowNull: false,
   },
   year: {
-    type: DataTypes.DATE,
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
   phone: {

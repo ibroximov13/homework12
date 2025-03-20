@@ -102,27 +102,6 @@ exports.getProductsByCategoryId = async (req, res) => {
     }
 };
 
-exports.updateProduct = async (req, res) => {
-    try {
-        let { error, value } = ProductValidationCreate.validate(req.body);
-        if (error) {
-            logger.warn(error.details[0].message);
-            return res.status(400).send(error.details[0].message);
-        }
-        const product = await Product.findByPk(req.params.id);
-        if (!product) {
-            logger.warn('product not found for update');
-            return res.status(404).json({ message: "product not found" });
-        }
-        await product.update(value);
-        logger.info('product update');
-        res.status(200).json(product);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
-
 exports.patchProduct = async (req, res) => {
     try {
         let {error, value} = ProductPatchValidation.validate(req.body);

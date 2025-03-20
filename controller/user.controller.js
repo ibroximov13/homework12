@@ -4,8 +4,9 @@ const bcrypt = require("bcrypt")
 const nodemailer = require('nodemailer')
 const jwt = require("jsonwebtoken")
 const dotenv = require("dotenv");
-const { User } = require("../model");
-const { createUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate } = require("../validation/user.validation");
+const { User, Region } = require("../model");
+const { createUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate, patchUserValidate } = require("../validation/user.validation");
+const { Op } = require("sequelize");
 dotenv.config()
 
 totp.options = {
@@ -82,10 +83,16 @@ async function register(req, res) {
         if (error) {
             return res.status(400).send(error.details[0].message);
         }
-        console.log(value);
         const { fullName, year, phone, email, password, region_id, role } = value;
 
-        let existingUser = await User.findOne({ where: { phone } });
+        let existingUser = await User.findOne({
+            where: {
+                [Op.or]: [
+                    {phone: phone},
+                    {email: email}
+                ]
+            }
+        });
         if (existingUser) {
             return res.status(400).send({ message: "User already exists" });
         }
@@ -106,8 +113,15 @@ async function loginUser(req, res) {
         if (error) {
             return res.status(400).send(error.details[0].message);
         }
-        let { phone, password } = value;
-        let newUser = await User.findOne({ where: { phone } });
+        let { phone, email, password } = value;
+        let newUser = await User.findOne({
+            where: {
+                [Op.and]: [
+                    {phone: phone},
+                    {email: email}
+                ]
+            }
+        });
         if (!newUser) {
             return res.status(404).send({ message: "User not found" });
         };
@@ -153,6 +167,69 @@ async function refreshToken(req, res) {
     } catch (err) {
         res.status(403).send({ message: "Noto'g'ri refresh token" });
     }
+};
+
+async function getAllUsers(req, res) {
+    try {
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const offset = (page - 1) * limit;
+
+        const name = req.query.name || "";
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const column = req.query.column || "id"
+
+        let user = await User.findAll({
+            where: {
+                fullName: {
+                    [Op.like]: `%${name}%`
+                }
+            },
+            limit: limit,
+            offset: offset,
+            order: [[column, order]],
+            include: [{model: Region}]
+        });
+        res.status(200).send(user)
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+async function updateUser(req, res) {
+    try {
+        let {error, value} = patchUserValidate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        };
+        let user = await User.findByPk(req.params.id);
+        if (!user) {
+            return res.status(404).send({message: "User not found"});
+        };
+
+        if (Object.keys(value).length === 0) {
+            return res.status(400).json({ message: "No fields to update" });
+        }
+
+        const updateUser = await user.update(value);
+        res.send(updateUser);
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+async function deleteUser(req, res) {
+    try {
+    let id = req.params.id;
+    let user = await User.findByPk(id);
+    if (!user) {
+        return res.status(404).send({message: "User not found"});
+    };
+    const deleteUser = await user.destroy();
+    res.send(deleteUser);
+    } catch (error) {
+        console.log(error);
+    }
 }
 
-module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser }
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser }
