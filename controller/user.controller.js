@@ -54,7 +54,7 @@ async function sendOtp(req, res) {
             text: `Sizning tasdiqlash kodingiz: ${otp}`,
         });
 
-        res.send({ message: "OTP telefon va email orqali yuborildi", otp });
+        res.send({ otp });
 
     } catch (error) {
         console.error("OTP jo'natishda xatolik:", error);
@@ -149,7 +149,7 @@ const uploadImage = async (req, res) => {
             return res.status(400).json({ error: "Rasm yuklanishi kerak" });
         }
         const imageUrl = `${req.protocol}://${req.get("host")}/image/${req.file.filename}`;
-        res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", url: imageUrl });
+        res.status(200).json({ url: imageUrl });
     } catch (error) {
         res.status(500).json({ error: "Serverda xatolik yuz berdi" });
     }
@@ -277,7 +277,27 @@ async function createSuperAdmin(req, res) {
         console.error(error);
         return res.status(500).send({ message: "Internal Server Error" });
     }
+};
+
+async function getMeProfile(req, res) {
+    try {
+        const userId = req.user.id;
+        const user = await User.findOne({
+            where: { id: userId },
+            attributes: ["id", "fullName", "email", "phone"]
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json(user);
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 }
 
 
-module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser, uploadImage, createSuperAdmin }
+
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser, uploadImage, createSuperAdmin, getMeProfile }

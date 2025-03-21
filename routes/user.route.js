@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, createSuperAdmin, getAllUsers, updateUser, deleteUser } = require("../controller/user.controller");
+const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, createSuperAdmin, getAllUsers, updateUser, deleteUser, getMeProfile } = require("../controller/user.controller");
 const upload = require("../multer/user.multer");
 const verifyTokenAndRole = require("../middlewares/verifyTokenAndRole");
 
@@ -101,7 +101,7 @@ router.post('/verify-otp', verifyOtp);
  *                 example: "image.png"
  *               role: 
  *                 type: string
- *                 example: "ADMIN"
+ *                 example: "USER"
  *     responses:
  *       201:
  *         description: User registered successfully.
@@ -434,4 +434,48 @@ router.delete("/:id", deleteUser);
 
 router.post("/create-superadmin", verifyTokenAndRole(['ADMIN']), createSuperAdmin);
 
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Get the authenticated user's profile
+ *     description: Returns the profile details of the authenticated user.
+ *     tags:
+ *       - Users
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully fetched user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 fullname:
+ *                   type: string
+ *                   example: "John Doe"
+ *                 email:
+ *                   type: string
+ *                   example: "johndoe@example.com"
+ *                 phone:
+ *                   type: string
+ *                   example: "+998901234567"
+ *       401:
+ *         description: Unauthorized (Invalid token or no token provided)
+ *       403:
+ *         description: Forbidden (User does not have permission)
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get(
+    "/me",
+    verifyTokenAndRole(["USER", "ADMIN", "SUPERADMIN", "SELLER"]),
+    getMeProfile
+  );
+
 module.exports = router;
+  
