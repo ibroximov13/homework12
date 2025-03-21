@@ -54,7 +54,7 @@ async function sendOtp(req, res) {
             text: `Sizning tasdiqlash kodingiz: ${otp}`,
         });
 
-        res.send({ message: "OTP telefon va email orqali yuborildi", otp });
+        res.send({ otp });
 
     } catch (error) {
         console.error("OTP jo'natishda xatolik:", error);
@@ -149,7 +149,7 @@ const uploadImage = async (req, res) => {
             return res.status(400).json({ error: "Rasm yuklanishi kerak" });
         }
         const imageUrl = `${req.protocol}://${req.get("host")}/image/${req.file.filename}`;
-        res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", url: imageUrl });
+        res.status(200).json({ url: imageUrl });
     } catch (error) {
         res.status(500).json({ error: "Serverda xatolik yuz berdi" });
     }

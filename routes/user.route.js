@@ -101,7 +101,7 @@ router.post('/verify-otp', verifyOtp);
  *                 example: "image.png"
  *               role: 
  *                 type: string
- *                 example: "ADMIN"
+ *                 example: "USER"
  *     responses:
  *       201:
  *         description: User registered successfully.

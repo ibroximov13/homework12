@@ -30,7 +30,7 @@ exports.getAllOrders = async (req, res) => {
         
         const orders = await Order.findAll({
             include: [
-                { model: User, attributes: ["id", "fullname", "email", "phone"] },
+                { model: User },
                 {
                     model: OrderItem,
                     include: [{ model: Product, attributes: ["id", "name", "price", "image"] }]
