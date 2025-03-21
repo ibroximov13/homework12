@@ -26,3 +26,16 @@
 2025-03-21 11:32:44 [INFO]: All comments fetche
 2025-03-21 12:26:35 [INFO]: order create
 2025-03-21 12:28:24 [INFO]: order item created!
+2025-03-21 12:29:10 [INFO]: All comments fetche
+2025-03-21 12:29:28 [INFO]: order fetch by ID
+2025-03-21 12:30:22 [INFO]: All comments fetche
+2025-03-21 12:33:33 [INFO]: All comments fetche
+2025-03-21 14:31:50 [INFO]: order fetch by ID
+2025-03-21 14:32:10 [INFO]: All comments fetche
+2025-03-21 14:35:07 [WARN]: "star" must be less than or equal to 5
+2025-03-21 14:35:14 [INFO]: Comment created
+2025-03-21 14:39:18 [INFO]: All comments fetche
+2025-03-21 14:59:45 [INFO]: Comment created
+2025-03-21 15:17:48 [WARN]: comment not found
+2025-03-21 15:18:05 [INFO]: All comments fetche
+2025-03-21 15:22:49 [INFO]: Comment created

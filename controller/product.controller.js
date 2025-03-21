@@ -1,23 +1,31 @@
-const { Product, Category, User } = require('../model');
+const { Product, Category, User, Comment } = require('../model');
 const logger = require('../logs/winston');
 const { ProductValidationCreate, ProductPatchValidation } = require('../validation/product.validation');
 const { fn, col, Op } = require('sequelize');
+
 
 exports.createProduct = async (req, res) => {
     try {
         let { error, value } = ProductValidationCreate.validate(req.body);
         if (error) {
-            logger.warn(error.details[0].message);
             return res.status(400).send(error.details[0].message);
         }
-        const product = await Product.create(value);
-        logger.info('product create');
+
+        const categoryExists = await Category.findByPk(value.category_id);
+        if (!categoryExists) {
+            return res.status(400).json({ error: "Category not found" });
+        }
+
+        const { star, comment, ...filteredData } = value;
+
+        const product = await Product.create(filteredData);
         res.status(201).json(product);
     } catch (err) {
-        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
+    
 
 exports.uploadImage = async(req, res) => {
     if (!req.file) {
@@ -26,58 +34,59 @@ exports.uploadImage = async(req, res) => {
     res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", filename: req.file.filename });
 }
 
+
 exports.getAllProducts = async (req, res) => {
     try {
-        const page = parseInt(req.query.page, 10) || 1;
-        const limit = parseInt(req.query.limit, 10) || 10;
-        const offset = (page - 1) * limit;
-
-        const name = req.query.name || "";
-        const order = req.query.order === "DESC" ? "DESC" : "ASC";
-        const column = req.query.column || "id";
-        const price = parseFloat(req.query.price) || 0;
-
-        const products = await Product.findAll({ 
-            include: [Category, User],
+        const products = await Product.findAll({
+            include: [
+                { model: Category },
+                { model: User, attributes: ["id", "fullName"] }, 
+                { model: Comment, attributes: ["message"] } 
+            ],
             attributes: {
                 include: [
-                    [fn('AVG', col('comments')), "averageStar"]
-                ]
+                    [fn("COALESCE", fn("AVG", col("comments.star")), 0), "star"] 
+                ],
+                exclude: ["comment"] 
             },
-            where: {
-                name: {
-                    [Op.like]: `%${name}%`
-                },
-                price: {
-                    [Op.gte]: price
-                }
-            },
-            limit: limit,
-            offset: offset,
-            order: [[column, order]]
+            group: ["products.id", "Category.id", "User.id", "comments.id"] 
         });
-        logger.info('All products fetch');
+
         res.status(200).json(products);
     } catch (err) {
-        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 exports.getProductById = async (req, res) => {
     try {
-        const product = await Product.findByPk(req.params.id, { include: [Category, User] });
+        const product = await Product.findByPk(req.params.id, {
+            include: [
+                { model: Category },
+                { model: User, attributes: ["id", "fullName"] }, 
+                { model: Comment, attributes: ["message"] } 
+            ],
+            attributes: {
+                include: [
+                    [fn("COALESCE", fn("AVG", col("comments.star")), 0), "star"] 
+                ],
+                exclude: ["comment"]
+            },
+            group: ["products.id", "Category.id", "User.id", "comments.id"]
+        });
+
         if (!product) {
-            logger.warn('product not found');
-            return res.status(404).json({ message: "product not found" });
+            return res.status(404).json({ message: "Product not found" });
         }
-        logger.info('product fetch by ID');
+
         res.status(200).json(product);
     } catch (err) {
-        logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
+
 
 exports.getProductsByUserId = async (req, res) => {
     try {

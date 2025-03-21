@@ -69,11 +69,6 @@ router.get('/:id', productController.getProductById);
  *                 type: integer
  *               price:
  *                 type: integer
- *               star:
- *                 type: number
- *                 format: float
- *               comment:
- *                 type: string
  *     responses:
  *       201:
  *         description: Product created successfully.

@@ -33,12 +33,17 @@ const Product = db.define("products", {
     },
     star: {
         type: DataTypes.FLOAT,
-        allowNull: false,
+        allowNull: true,
+        defaultValue: 0
     },
     comment: {
         type: DataTypes.TEXT,
         allowNull: true
     }
-});
+},
+{
+    timestamps: false,
+}
+);
 
 module.exports = Product;
