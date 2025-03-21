@@ -26,3 +26,5 @@
 2025-03-21 11:32:44 [INFO]: All comments fetche
 2025-03-21 12:26:35 [INFO]: order create
 2025-03-21 12:28:24 [INFO]: order item created!
+2025-03-21 13:58:33 [INFO]: Fetched 4 categories
+2025-03-21 14:12:55 [ERROR]: Unknown column 'comments' in 'field list'

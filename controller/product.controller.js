@@ -10,6 +10,7 @@ exports.createProduct = async (req, res) => {
             logger.warn(error.details[0].message);
             return res.status(400).send(error.details[0].message);
         }
+        
         const product = await Product.create(value);
         logger.info('product create');
         res.status(201).json(product);
