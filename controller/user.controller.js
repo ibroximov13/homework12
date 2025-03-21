@@ -179,8 +179,8 @@ async function refreshToken(req, res) {
 
 async function getAllUsers(req, res) {
     try {
-        const page = req.query.page || 1;
-        const limit = req.query.limit || 10;
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
 
         const name = req.query.name || "";
@@ -249,7 +249,11 @@ async function deleteUser(req, res) {
 
 async function createSuperAdmin(req, res) {
     try {
-        const { fullName, year, phone, email, password, region_id } = req.body;
+        let { error, value } = createUserValidate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        }
+        const { phone, password, role, ...rest } = value;
 
         if (req.user.role !== "ADMIN") {
             return res.status(403).send({ message: "SuperAdmin yaratishga ruxsatingiz yo'q!" });
@@ -262,8 +266,9 @@ async function createSuperAdmin(req, res) {
 
         let hashedPassword = bcrypt.hashSync(password, 10);
         let newSuperAdmin = await User.create({
-            fullName, year, phone, email,
-            password: hashedPassword, region_id,
+            ...rest,
+            phone,
+            password: hashedPassword,
             role: "SUPERADMIN"
         });
 

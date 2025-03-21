@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, createSuperAdmin, getAllUsers, updateUser, deleteUser } = require("../controller/user.controller");
 const upload = require("../multer/user.multer");
-const verifyRole = require("../middlewares/verifyRole");
+const verifyTokenAndRole = require("../middlewares/verifyTokenAndRole");
 
 const router = Router();
 
@@ -164,22 +164,116 @@ router.post("/upload-image", upload.single("userImage"), uploadImage);
  *   post:
  *     summary: Refresh authentication token
  *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: The refresh token
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     responses:
  *       200:
- *         description: Token refreshed successfully.
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: The new access token
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *       400:
+ *         description: Bad request (missing or invalid token)
+ *       401:
+ *         description: Unauthorized (invalid or expired refresh token)
  */
-router.post("/refresh", refreshToken);
 
+router.post("/refresh", refreshToken);
 /**
  * @swagger
  * /users:
  *   get:
  *     summary: Get all users
- *     tags: [Users]
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: "Page number for pagination (default: 1)"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: "Number of users per page (default: 10)"
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: "Filter users by full name"
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *         description: "Sort order (default: ASC)"
+ *       - in: query
+ *         name: column
+ *         schema:
+ *           type: string
+ *         description: "Column to sort by (default: id)"
  *     responses:
  *       200:
- *         description: List of users.
+ *         description: "List of users"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   fullName:
+ *                     type: string
+ *                     example: "John Doe"
+ *                   year:
+ *                     type: integer
+ *                     example: 1995
+ *                   phone:
+ *                     type: string
+ *                     example: "+998901234567"
+ *                   email:
+ *                     type: string
+ *                     example: "johndoe@example.com"
+ *                   photo:
+ *                     type: string
+ *                     example: "https://example.com/uploads/johndoe.jpg"
+ *                   role:
+ *                     type: string
+ *                     enum: [USER, ADMIN, SUPERADMIN, SELLER]
+ *                     example: "USER"
+ *                   Region:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "Tashkent"
  */
+
+
 router.get("/", getAllUsers);
 
 /**
@@ -231,14 +325,113 @@ router.delete("/:id", deleteUser);
  * @swagger
  * /users/create-superadmin:
  *   post:
- *     summary: Create a super admin
+ *     summary: Yangi SuperAdmin yaratish
  *     tags: [Users]
+ *     description: "Faqat ADMIN roli bor foydalanuvchilar SuperAdmin yaratishi mumkin."
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullName
+ *               - year
+ *               - phone
+ *               - email
+ *               - password
+ *               - region_id
+ *               - photo
+ *               - role
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: "John Doe"
+ *               year:
+ *                 type: integer
+ *                 example: 1990
+ *               phone:
+ *                 type: string
+ *                 pattern: "^\\+998[0-9]{9}$"
+ *                 example: "+998901234567"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "johndoe@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "StrongP@ssw0rd"
+ *               region_id:
+ *                 type: integer
+ *                 example: 1
+ *               photo:
+ *                 type: string
+ *                 example: "https://example.com/photo.jpg"
+ *               role:
+ *                 type: string
+ *                 enum: ["USER", "ADMIN", "SUPERADMIN", "SELLER"]
+ *                 example: "SUPERADMIN"
  *     responses:
  *       201:
- *         description: Super admin created successfully.
+ *         description: "SuperAdmin muvaffaqiyatli yaratildi"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     fullName:
+ *                       type: string
+ *                       example: "John Doe"
+ *                     phone:
+ *                       type: string
+ *                       example: "+998901234567"
+ *                     email:
+ *                       type: string
+ *                       example: "johndoe@example.com"
+ *                     role:
+ *                       type: string
+ *                       example: "SUPERADMIN"
+ *       400:
+ *         description: "Foydalanuvchi allaqachon mavjud"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User already exists"
+ *       403:
+ *         description: "Ruxsat yo‘q"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "SuperAdmin yaratishga ruxsatingiz yo'q!"
+ *       500:
+ *         description: "Ichki server xatosi"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal Server Error"
  */
-router.post("/create-superadmin", verifyRole(['ADMIN']), createSuperAdmin);
+
+router.post("/create-superadmin", verifyTokenAndRole(['ADMIN']), createSuperAdmin);
 
 module.exports = router;

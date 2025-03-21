@@ -1,36 +1,33 @@
 const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
+require("dotenv").config();
 const { User } = require("../model");
 
-dotenv.config();
+function VerifyToken(req, res, next) {
+    let authHeader = req.header("Authorization");
 
-const verifyToken = async (req, res, next) => {
-    try {
-        const header = req.header("Authorization");
-        if (!header || !header.startsWith("Bearer ")) {
-            return res.status(401).json({ msg: "Invalid or missing Authorization header" });
-        }
+    if (!authHeader) {
+        return res.status(404).send({message: "Token not found"})
+    };
 
-        const token = header.split(" ")[1];
-        if (!token) {
-            return res.status(401).json({ msg: "Empty token" });
-        }
+    let token = authHeader.split(' ')[1];
 
-        const accessSecret = process.env.JWT_SECRET || "nimadir2";
-        const data = jwt.verify(token, accessSecret);
+    if (authHeader.startsWith("Bearer Bearer")) {
+        token = authHeader.split(' ')[2];
+    };
 
-        console.log(data);
-        const user = await User.findByPk(data.id);
-        console.log(user);
-        if (!user) {
-            return res.status(401).json({ msg: "Not allowed" });
-        }
-
-        req.user = user;
-        next();
-    } catch (error) {
-        return res.status(500).json({ msg: "Server error", error: error.message });
+    if (!token) {
+        return res.status(400).send({message: "Token mismatch, please try again"})
     }
-};
-
-module.exports = verifyToken;
+    try {
+        let JWT_SECRET = process.env.JWT_SECRET || "nimadir2";
+        let matchToken = jwt.verify(token, JWT_SECRET);
+        if (!matchToken) {
+            return res.status(400).send("Token is not valid");
+        }
+        req.user = matchToken.id;
+        next()
+    } catch (error) {
+        console.log(error);
+        res.status(401).send(error)
+    }
+}

@@ -1,6 +1,7 @@
 const { Comment, User, Product } = require('../model');
 const logger = require('../logs/winston');
 const { CommentValidationCreate, CommentPatchValidation } = require('../validation/comment.validation');
+const { Op } = require('sequelize');
 
 exports.createComment = async (req, res) => {
     try {
@@ -20,7 +21,25 @@ exports.createComment = async (req, res) => {
 
 exports.getAllComments = async (req, res) => {
     try {
-        const comments = await Comment.findAll({ include: [User, Product] });
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+
+        const name = req.query.name || "";
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const column = req.query.column || "id"
+
+        const comments = await Comment.findAll({ 
+            where: {
+                message: {
+                    [Op.like]: `%${name}%`
+                }
+            },
+            include: [User, Product],
+            limit: limit,
+            offset: offset,
+            order: [[column, order]]
+        });
         logger.info('All comments fetche');
         res.status(200).json(comments);
     } catch (err) {

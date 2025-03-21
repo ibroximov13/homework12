@@ -10,3 +10,13 @@
 2025-03-20 12:38:18 [INFO]: region create
 2025-03-20 12:38:27 [INFO]: region create
 2025-03-21 06:04:53 [ERROR]: Unknown column 'comments' in 'field list'
+2025-03-21 08:57:04 [INFO]: Fetched 0 categories
+2025-03-21 08:58:16 [INFO]: All comments fetche
+2025-03-21 08:58:26 [INFO]: All comments fetche
+2025-03-21 08:59:47 [ERROR]: Unknown column 'comments' in 'field list'
+2025-03-21 08:59:59 [INFO]: fetch all regions
+2025-03-21 09:26:39 [INFO]: category create with ID: 1
+2025-03-21 09:30:18 [INFO]: category create with ID: 2
+2025-03-21 09:32:13 [INFO]: category create with ID: 3
+2025-03-21 09:43:13 [INFO]: category create with ID: 4
+2025-03-21 10:17:55 [INFO]: fetch all regions

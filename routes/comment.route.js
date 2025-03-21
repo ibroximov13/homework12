@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const commentController = require('../controller/comment.controller');
-const verifyToken  = require("../middlewares/verifyToken");
+const verifyTokenAndRole  = require("../middlewares/verifyTokenAndRole");
 
 /**
  * @swagger
@@ -17,11 +17,77 @@ const verifyToken  = require("../middlewares/verifyToken");
  *     tags: [Comments]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of comments per page
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *           example: "Great product"
+ *         description: Filter comments by message content
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           example: "DESC"
+ *         description: Sort order (ascending or descending)
+ *       - in: query
+ *         name: column
+ *         schema:
+ *           type: string
+ *           example: "id"
+ *         description: Column to sort by
  *     responses:
  *       200:
  *         description: A list of comments.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   message:
+ *                     type: string
+ *                     example: "Great product!"
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 2
+ *                       name:
+ *                         type: string
+ *                         example: "John Doe"
+ *                   product:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 5
+ *                       name:
+ *                         type: string
+ *                         example: "Laptop"
+ *       500:
+ *         description: Internal server error
  */
-router.get('/', verifyToken, commentController.getAllComments);
+
+router.get('/', commentController.getAllComments);
 
 /**
  * @swagger
@@ -41,7 +107,7 @@ router.get('/', verifyToken, commentController.getAllComments);
  *       200:
  *         description: Comment data.
  */
-router.get('/:id', verifyToken, commentController.getCommentById);
+router.get('/:id', commentController.getCommentById);
 
 /**
  * @swagger
@@ -61,7 +127,7 @@ router.get('/:id', verifyToken, commentController.getCommentById);
  *       200:
  *         description: Comments data.
  */
-router.get('/by-user/:user_id', verifyToken, commentController.getCommentsByUserId);
+router.get('/by-user/:user_id', commentController.getCommentsByUserId);
 
 /**
  * @swagger
@@ -81,7 +147,7 @@ router.get('/by-user/:user_id', verifyToken, commentController.getCommentsByUser
  *       200:
  *         description: Comments data.
  */
-router.get('/by-product/:product_id', verifyToken, commentController.getCommentsByProductId);
+router.get('/by-product/:product_id', commentController.getCommentsByProductId);
 
 /**
  * @swagger
@@ -110,7 +176,7 @@ router.get('/by-product/:product_id', verifyToken, commentController.getComments
  *       201:
  *         description: Comment created successfully.
  */
-router.post('/', verifyToken, commentController.createComment);
+router.post('/', commentController.createComment);
 
 /**
  * @swagger
@@ -145,7 +211,7 @@ router.post('/', verifyToken, commentController.createComment);
  *       200:
  *         description: Comment updated successfully.
  */
-router.patch('/:id', verifyToken, commentController.patchComment);
+router.patch('/:id', commentController.patchComment);
 
 /**
  * @swagger
@@ -165,6 +231,6 @@ router.patch('/:id', verifyToken, commentController.patchComment);
  *       200:
  *         description: Comment deleted successfully.
  */
-router.delete('/:id', verifyToken, commentController.deleteComment);
+router.delete('/:id', verifyTokenAndRole(["ADMIN", "USER", "SUPERADMIN"]), commentController.deleteComment);
 
 module.exports = router;
