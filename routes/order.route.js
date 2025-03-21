@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const commentController = require('../controller/comment.controller');
 const orderController = require('../controller/order.controller');
-const verifyToken  = require("../middlewares/verifyToken");
+const verifyTokenAndRole  = require("../middlewares/verifyTokenAndRole");
 
 /**
  * @swagger
@@ -22,7 +22,7 @@ const verifyToken  = require("../middlewares/verifyToken");
  *       200:
  *         description: A list of comments.
  */
-router.get('/', verifyToken, commentController.getAllComments);
+router.get('/', commentController.getAllComments);
 
 /**
  * @swagger
@@ -39,11 +39,88 @@ router.get('/', verifyToken, commentController.getAllComments);
  *     tags: [Orders]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of orders per page
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           example: "DESC"
+ *         description: Sort order (ascending or descending)
+ *       - in: query
+ *         name: column
+ *         schema:
+ *           type: string
+ *           example: "id"
+ *         description: Column to sort by
  *     responses:
  *       200:
  *         description: A list of orders.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 101
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       fullname:
+ *                         type: string
+ *                         example: "John Doe"
+ *                       email:
+ *                         type: string
+ *                         example: "john@example.com"
+ *                       phone:
+ *                         type: string
+ *                         example: "+123456789"
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                           example: 55
+ *                         product:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                               example: 10
+ *                             name:
+ *                               type: string
+ *                               example: "Laptop"
+ *                             price:
+ *                               type: number
+ *                               example: 1200.99
+ *                             image:
+ *                               type: string
+ *                               example: "https://example.com/images/laptop.jpg"
+ *       500:
+ *         description: Internal server error
  */
-router.get('/orders', verifyToken, orderController.getAllOrders);
+
+router.get('/orders', orderController.getAllOrders);
 
 /**
  * @swagger
@@ -63,7 +140,7 @@ router.get('/orders', verifyToken, orderController.getAllOrders);
  *       200:
  *         description: Order data.
  */
-router.get('/orders/:id', verifyToken, orderController.getOrderById);
+router.get('/orders/:id', orderController.getOrderById);
 
 /**
  * @swagger
@@ -86,7 +163,7 @@ router.get('/orders/:id', verifyToken, orderController.getOrderById);
  *       201:
  *         description: Order created successfully.
  */
-router.post('/orders', verifyToken, orderController.createOrder);
+router.post('/orders', orderController.createOrder);
 
 /**
  * @swagger
@@ -115,7 +192,7 @@ router.post('/orders', verifyToken, orderController.createOrder);
  *       200:
  *         description: Order updated successfully.
  */
-router.patch('/orders/:id', verifyToken, orderController.updateOrder);
+router.patch('/orders/:id', orderController.updateOrder);
 
 /**
  * @swagger
@@ -135,7 +212,7 @@ router.patch('/orders/:id', verifyToken, orderController.updateOrder);
  *       200:
  *         description: Order deleted successfully.
  */
-router.delete('/orders/:id', verifyToken, orderController.deleteOrder);
+router.delete('/orders/:id', orderController.deleteOrder);
 
 /**
  * @swagger
@@ -169,7 +246,7 @@ router.delete('/orders/:id', verifyToken, orderController.deleteOrder);
  *       201:
  *         description: Order item created successfully.
  */
-router.post("/orders/order-item", verifyToken, orderController.createOrderItem);
+router.post("/orders/order-item", orderController.createOrderItem);
 
 /**
  * @swagger
@@ -189,7 +266,7 @@ router.post("/orders/order-item", verifyToken, orderController.createOrderItem);
  *       200:
  *         description: List of order items for the given order.
  */
-router.get('/orders/items/by-order/:order_id', verifyToken, orderController.getOrderItemsByOrderId);
+router.get('/orders/items/by-order/:order_id', orderController.getOrderItemsByOrderId);
 
 /**
  * @swagger
@@ -209,6 +286,6 @@ router.get('/orders/items/by-order/:order_id', verifyToken, orderController.getO
  *       200:
  *         description: List of order items for the given product.
  */
-router.get('/orders/items/by-product/:product_id', verifyToken, orderController.getOrderItemsByProductId);
+router.get('/orders/items/by-product/:product_id', orderController.getOrderItemsByProductId);
 
 module.exports = router;

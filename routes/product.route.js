@@ -2,8 +2,7 @@ const router = require('express').Router();
 const commentController = require('../controller/comment.controller');
 const orderController = require('../controller/order.controller');
 const productController = require('../controller/product.controller');
-const verifyToken  = require("../middlewares/verifyToken");
-const verifyRole = require("../middlewares/verifyRole");
+const verifyTokenAndRole  = require("../middlewares/verifyTokenAndRole");
 const upload = require("../multer/product.multer");
 
 /**
@@ -23,7 +22,7 @@ const upload = require("../multer/product.multer");
  *       200:
  *         description: A list of products.
  */
-router.get('/products', productController.getAllProducts);
+router.get('/', productController.getAllProducts);
 
 /**
  * @swagger
@@ -41,7 +40,7 @@ router.get('/products', productController.getAllProducts);
  *       200:
  *         description: Product data.
  */
-router.get('/products/:id', productController.getProductById);
+router.get('/:id', productController.getProductById);
 
 /**
  * @swagger
@@ -79,7 +78,7 @@ router.get('/products/:id', productController.getProductById);
  *       201:
  *         description: Product created successfully.
  */
-router.post('/products', verifyToken, verifyRole(['ADMIN', 'SELLER']), productController.createProduct);
+router.post('/', verifyTokenAndRole(['ADMIN', 'SELLER']), productController.createProduct);
 
 /**
  * @swagger
@@ -123,7 +122,7 @@ router.post('/products', verifyToken, verifyRole(['ADMIN', 'SELLER']), productCo
  *       200:
  *         description: Product updated successfully.
  */
-router.patch('/products/:id', verifyToken, verifyRole(['ADMIN', 'SUPERADMIN', 'SELLER']), productController.patchProduct);
+router.patch('/:id', verifyTokenAndRole(['ADMIN', 'SUPERADMIN', 'SELLER']), productController.patchProduct);
 
 /**
  * @swagger
@@ -143,7 +142,7 @@ router.patch('/products/:id', verifyToken, verifyRole(['ADMIN', 'SUPERADMIN', 'S
  *       200:
  *         description: Product deleted successfully.
  */
-router.delete('/products/:id', verifyToken, verifyRole(['ADMIN', 'SELLER']), productController.deleteProduct);
+router.delete('/:id', verifyTokenAndRole(['ADMIN', 'SELLER']), productController.deleteProduct);
 
 /**
  * @swagger
@@ -165,6 +164,6 @@ router.delete('/products/:id', verifyToken, verifyRole(['ADMIN', 'SELLER']), pro
  *       201:
  *         description: Image uploaded successfully.
  */
-router.post("/products/upload-image", upload.single("productImage"), productController.uploadImage);
+router.post("/upload-image",verifyTokenAndRole(["ADMIN", "SELLER"]), upload.single("productImage"), productController.uploadImage);
 
 module.exports = router;
