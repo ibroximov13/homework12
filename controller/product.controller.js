@@ -3,7 +3,6 @@ const logger = require('../logs/winston');
 const { ProductValidationCreate, ProductPatchValidation } = require('../validation/product.validation');
 const { fn, col, Op } = require('sequelize');
 
-
 exports.createProduct = async (req, res) => {
     try {
         let { error, value } = ProductValidationCreate.validate(req.body);
@@ -25,8 +24,6 @@ exports.createProduct = async (req, res) => {
     }
 };
 
-    
-
 exports.uploadImage = async(req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: "Rasm yuklanishi kerak" });
@@ -34,9 +31,18 @@ exports.uploadImage = async(req, res) => {
     res.status(200).json({ message: "Rasm muvaffaqiyatli yuklandi", filename: req.file.filename });
 }
 
-
 exports.getAllProducts = async (req, res) => {
     try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+
+        const name = req.query.name || "";
+        const order = req.query.order === "DESC" ? "DESC" : "ASC";
+        const allowedColumns = ["id", "name", "price"];
+        const column = allowedColumns.includes(req.query.column) ? req.query.column : "id";
+
+        
         const products = await Product.findAll({
             include: [
                 { model: Category },
@@ -49,7 +55,16 @@ exports.getAllProducts = async (req, res) => {
                 ],
                 exclude: ["comment"] 
             },
-            group: ["products.id", "Category.id", "User.id", "comments.id"] 
+            group: ["products.id", "Category.id", "User.id", "comments.id"],
+            subQuery: false,
+            where: {
+                name: {
+                    [Op.like]: `%${name}%`
+                }
+            },
+            limit: limit,
+            offset: offset,
+            order: [[column, order]]
         });
 
         res.status(200).json(products);
@@ -85,8 +100,6 @@ exports.getProductById = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
-
 
 exports.getProductsByUserId = async (req, res) => {
     try {

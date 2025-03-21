@@ -11,6 +11,6 @@ const Region = db.define("regions", {
         type: DataTypes.STRING,
         allowNull: false
     }
-});
+}, {timestamps: false});
 
 module.exports = Region;

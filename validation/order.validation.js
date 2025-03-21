@@ -1,7 +1,12 @@
 const Joi = require("joi");
 
-const OrderValidation = Joi.object({
-    user_id: Joi.number().integer().optional(),
+const orderValidation = Joi.object({
+    products: Joi.array().items(
+        Joi.object({
+            product_id: Joi.number().integer().required(),
+            count: Joi.number().integer().min(1).required()
+        })
+    ).min(1).required()
 });
 
-module.exports = OrderValidation
+module.exports = orderValidation

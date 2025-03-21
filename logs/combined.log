@@ -26,3 +26,16 @@
 2025-03-21 11:32:44 [INFO]: All comments fetche
 2025-03-21 12:26:35 [INFO]: order create
 2025-03-21 12:28:24 [INFO]: order item created!
+2025-03-21 16:47:51 [ERROR]: error creating category: Field 'createdAt' doesn't have a default value
+2025-03-21 16:47:57 [ERROR]: error creating category: Field 'createdAt' doesn't have a default value
+2025-03-21 16:50:48 [ERROR]: error creating category: Field 'createdAt' doesn't have a default value
+2025-03-21 16:52:07 [INFO]: category create with ID: 1
+2025-03-21 16:53:47 [INFO]: region create
+2025-03-21 17:08:14 [INFO]: All comments fetche
+2025-03-21 23:12:15 [INFO]: All orders fetch
+2025-03-21 23:15:45 [INFO]: All orders fetched successfully
+2025-03-21 23:17:42 [INFO]: All orders fetched successfully
+2025-03-21 23:19:06 [INFO]: All orders fetched successfully
+2025-03-21 23:19:52 [INFO]: All orders fetched successfully
+2025-03-21 23:47:01 [INFO]: Fetched 1 categories
+2025-03-21 23:47:14 [INFO]: All comments fetche

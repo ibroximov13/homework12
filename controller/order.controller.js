@@ -1,18 +1,12 @@
 const { Order, OrderItem, Product, User } = require('../model');
 const logger = require('../logs/winston');
-// const OrderValidation = require('../validation/order.validation');
-const { OrderItemValidationCreate } = require('../validation/orderItem.validation');
+const orderValidation = require('../validation/order.validation');
 
 exports.createOrder = async (req, res) => {
     try {
-        console.log("Received body:", req.body); // 🛠 JSON tekshirish
-
-        if (!req.body || typeof req.body !== "object") {
-            return res.status(400).json({ error: "Invalid JSON format" });
-        }
-
-        if (!req.body.items || !Array.isArray(req.body.items) || req.body.items.length === 0) {
-            return res.status(400).json({ error: "Order items are required" });
+        let {error, value} = orderValidation.validate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
         }
 
         if (!req.user || !req.user.id) {
@@ -20,11 +14,11 @@ exports.createOrder = async (req, res) => {
         }
 
         const userId = req.user.id;
-        const { items } = req.body;
+        const { products } = value;
 
         const order = await Order.create({ user_id: userId });
 
-        const mergedItems = items.reduce((acc, item) => {
+        const mergedItems = products.reduce((acc, item) => {
             const existingItem = acc.find(i => i.product_id === item.product_id);
             if (existingItem) {
                 existingItem.count += item.count;
@@ -34,21 +28,40 @@ exports.createOrder = async (req, res) => {
             return acc;
         }, []);
 
-        const orderItems = mergedItems.map(item => ({
-            order_id: order.id,
-            product_id: item.product_id,
-            count: item.count
-        }));
+        const orderItems = await OrderItem.bulkCreate(
+            mergedItems.map(item => ({
+                order_id: order.id,
+                product_id: item.product_id,
+                count: item.count
+            })),
+            { returning: true } 
+        );
 
-        await OrderItem.bulkCreate(orderItems);
+        const orderedProducts = await OrderItem.findAll({
+            where: {
+                order_id: order.id
+            },
+            attributes: {
+                exclude: ["product_id"]
+            },
+            include: [
+                {
+                    model: Product,
+                    attributes: ["id","name", "price"],
+                }
+            ]
+        })
 
-        res.status(201).json({ message: "Order created successfully", order });
+        const totalSumma = orderedProducts.reduce((sum, item) => {
+            return sum + (item.count * item.product.price);
+        }, 0);
+
+        res.status(201).json({ order, orderedProducts, totalSumma });
     } catch (error) {
         console.error("Error in createOrder:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
-
 
 exports.getAllOrders = async (req, res) => {
     try {
@@ -56,93 +69,98 @@ exports.getAllOrders = async (req, res) => {
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
 
-        const order = req.query.order === "DESC" ? "DESC" : "ASC";
-        const column = req.query.column || "id"
-        
+        const allowedColumns = ["id", "createdAt", "updatedAt"]; 
+        const column = allowedColumns.includes(req.query.column) ? req.query.column : "id";
+
+        const order = req.query.order && req.query.order.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
         const orders = await Order.findAll({
+            attributes: {exclude: "user_id"},
             include: [
-                { model: User },
+                { model: User, attributes: ["id", "fullname", "phone"] },
                 {
-                    model: OrderItem,   
-                    include: [{ model: Product, attributes: ["id", "name", "price", "image"] }]
+                    model: OrderItem,
+                    include: [{ model: Product, attributes: ["id", "name", "price"] }]
                 }
             ],
-            limit: limit,
-            offset: offset,
+            limit,
+            offset,
             order: [[column, order]]
         });
-        logger.info('All orders fetch');
+
+        logger.info('All orders fetched successfully');
         res.status(200).json(orders);
     } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
+        logger.error(`Error fetching orders: ${err.message}`);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
 
 exports.getOrderById = async (req, res) => {
     try {
-        const order = await Order.findByPk(req.params.id, {
+        const { id } = req.params;
+
+        const order = await Order.findAll({
+            where: { id },
             include: [
-                { model: User, attributes: ["id", "fullname", "email", "phone"] },
                 {
                     model: OrderItem,
-                    include: [{ model: Product, attributes: ["id", "name", "price", "image"] }]
+                    include: [
+                        {
+                            model: Product,
+                            attributes: ["id", "name", "price"]
+                        }
+                    ]
                 }
             ]
         });
-        if (!order) {
-            logger.warn('order not found');
-            return res.status(404).json({ message: "order not found" });
+
+        if (!order.length) {
+            return res.status(404).json({ message: "Order not found" });
         }
-        logger.info('order fetch by ID');
+
         res.status(200).json(order);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        logger.error(error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
-exports.getOrdersByUserId = async (req, res) => {
-    try {
-        const { user_id } = req.params;
-        const orders = await Order.findAll({
-            where: { user_id },
-            include: [
-                { model: User, attributes: ["id", "fullname", "email", "phone"] },
-                {
-                    model: OrderItem,
-                    include: [{ model: Product, attributes: ["id", "name", "price", "image"] }]
-                }
-            ]
-        });
-        logger.info(`order fetch by user ID: ${user_id}`);
-        res.status(200).json(orders);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ message: err.message });
-    }
-};
 
 exports.updateOrder = async (req, res) => {
     try {
-        let { error, value } = OrderValidation.validate(req.body);
+        let { error, value } = orderValidation.validate(req.body);
         if (error) {
             logger.warn(error.details[0].message);
-            return res.status(400).send(error.details[0].message);
+            return res.status(400).json({ error: error.details[0].message });
         }
-        const order = await Order.findByPk(req.params.id);
-        if (!order) {
-            logger.warn('order not found for update');
-            return res.status(404).json({ message: "order not found" });
+
+        const orderItem = await OrderItem.findOne({
+            where: {
+                order_id: value.order_id,  
+                product_id: value.product_id, 
+            }
+        });
+
+        if (!orderItem) {
+            logger.warn('Order not found for update');
+            return res.status(404).json({ message: "Order not found. Please check the order ID and product ID." });
         }
-        await order.update(value);
-        logger.info('order update');
-        res.status(200).json(order);
+
+        await orderItem.update({
+            count: value.count, 
+        });
+
+        logger.info('Order updated successfully');
+        res.status(200).json({ message: "Order updated", updatedOrder: orderItem });
+
     } catch (err) {
         logger.error(err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
 
 exports.deleteOrder = async (req, res) => {
     try {
@@ -160,63 +178,33 @@ exports.deleteOrder = async (req, res) => {
     }
 };
 
-exports.getOrderItemsByOrderId = async (req, res) => {
-    try {
-        const { order_id } = req.params;
-        const orderItems = await OrderItem.findAll({
-            where: { order_id },
-            include: [Order, Product]
-        });
-        logger.info(`order items fetch by order ID: ${order_id}`);
-        res.status(200).json(orderItems);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
 
-exports.getOrderItemsByProductId = async (req, res) => {
+exports.getMyOrder = async (req, res) => {
     try {
-        const { product_id } = req.params;
-        const orderItems = await OrderItem.findAll({
-            where: { product_id },
-            include: [Order, Product]
-        });
-        logger.info(`order items fetch by product ID: ${product_id}`);
-        res.status(200).json(orderItems);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
+        const { id } = req.user;
 
-exports.createOrderItem = async(req, res) => {
-    try {
-        let {error, value} = OrderItemValidationCreate.validate(req.body);
-        if (error) {
-            logger.warn(error.details[0].message)
-            return res.status(400).send(error.details[0].message);
+        const order = await Order.findAll({
+            where: { id },
+            include: [
+                {
+                    model: OrderItem,
+                    include: [
+                        {
+                            model: Product,
+                            attributes: ["id", "name", "price"]
+                        }
+                    ]
+                }
+            ]
+        });
+
+        if (!order.length) {
+            return res.status(404).json({ message: "Order not found" });
         }
-        let orderItem = await OrderItem.create(value);
-        logger.info(`order item created!`);
-        res.status(201).send(orderItem);
+
+        res.status(200).json(order);
     } catch (error) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
+        logger.error(error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
-
-// exports.getMyOrder = async(req, res) => {
-//     try {
-//         let {id} = req.params
-//         let order = await Order.findAll({
-//             where: {
-//                 order_id: id
-//             },
-//             include: [Product, OrderItem]
-//         })
-//     } catch (error) {
-//         logger.error(err.message);
-//         res.status(500).json({ error: err.message});
-//     }
-// }

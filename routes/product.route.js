@@ -18,10 +18,85 @@ const upload = require("../multer/product.multer");
  *   get:
  *     summary: Get all products
  *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of products per page
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: Filter products by name (partial match)
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: ASC
+ *         description: Sorting order
+ *       - in: query
+ *         name: column
+ *         schema:
+ *           type: string
+ *           enum: [id, name, createdAt, updatedAt, price]
+ *           default: id
+ *         description: Column to sort by
  *     responses:
  *       200:
- *         description: A list of products.
+ *         description: A list of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   price:
+ *                     type: number
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   star:
+ *                     type: number
+ *                   Category:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                   User:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       fullName:
+ *                         type: string
+ *                   comments:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         message:
+ *                           type: string
  */
+
 router.get('/', productController.getAllProducts);
 
 /**

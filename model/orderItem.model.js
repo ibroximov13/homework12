@@ -19,6 +19,6 @@ const OrderItem = db.define("orderItems", {
         type: DataTypes.INTEGER,
         allowNull: false
     }
-});
+}, {timestamps: false});
 
 module.exports = OrderItem;
