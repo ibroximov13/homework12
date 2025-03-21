@@ -1,23 +1,54 @@
 const { Order, OrderItem, Product, User } = require('../model');
 const logger = require('../logs/winston');
-const OrderValidation = require('../validation/order.validation');
+// const OrderValidation = require('../validation/order.validation');
 const { OrderItemValidationCreate } = require('../validation/orderItem.validation');
 
 exports.createOrder = async (req, res) => {
     try {
-        let { error, value } = OrderValidation.validate(req.body);
-        if (error) {
-            logger.warn(error.details[0].message);
-            return res.status(400).send(error.details[0].message);
+        console.log("Received body:", req.body); // 🛠 JSON tekshirish
+
+        if (!req.body || typeof req.body !== "object") {
+            return res.status(400).json({ error: "Invalid JSON format" });
         }
-        const order = await Order.create(value);
-        logger.info('order create');
-        res.status(201).json(order);
-    } catch (err) {
-        logger.error(err.message);
-        res.status(500).json({ error: err.message });
+
+        if (!req.body.items || !Array.isArray(req.body.items) || req.body.items.length === 0) {
+            return res.status(400).json({ error: "Order items are required" });
+        }
+
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Unauthorized: User ID is missing" });
+        }
+
+        const userId = req.user.id;
+        const { items } = req.body;
+
+        const order = await Order.create({ user_id: userId });
+
+        const mergedItems = items.reduce((acc, item) => {
+            const existingItem = acc.find(i => i.product_id === item.product_id);
+            if (existingItem) {
+                existingItem.count += item.count;
+            } else {
+                acc.push({ ...item });
+            }
+            return acc;
+        }, []);
+
+        const orderItems = mergedItems.map(item => ({
+            order_id: order.id,
+            product_id: item.product_id,
+            count: item.count
+        }));
+
+        await OrderItem.bulkCreate(orderItems);
+
+        res.status(201).json({ message: "Order created successfully", order });
+    } catch (error) {
+        console.error("Error in createOrder:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
 
 exports.getAllOrders = async (req, res) => {
     try {

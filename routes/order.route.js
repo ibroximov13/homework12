@@ -163,7 +163,7 @@ router.get('/:id', orderController.getOrderById);
  *       201:
  *         description: Order created successfully.
  */
-router.post('/', orderController.createOrder);
+router.post('/',verifyTokenAndRole(['ADMIN']), orderController.createOrder);
 
 /**
  * @swagger
