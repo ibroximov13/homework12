@@ -120,7 +120,7 @@ router.get('/', commentController.getAllComments);
  *         description: Internal server error
  */
 
-router.get('/orders', orderController.getAllOrders);
+router.get('/', orderController.getAllOrders);
 
 /**
  * @swagger
@@ -140,7 +140,7 @@ router.get('/orders', orderController.getAllOrders);
  *       200:
  *         description: Order data.
  */
-router.get('/orders/:id', orderController.getOrderById);
+router.get('/:id', orderController.getOrderById);
 
 /**
  * @swagger
@@ -163,7 +163,7 @@ router.get('/orders/:id', orderController.getOrderById);
  *       201:
  *         description: Order created successfully.
  */
-router.post('/orders', orderController.createOrder);
+router.post('/', orderController.createOrder);
 
 /**
  * @swagger
@@ -192,7 +192,7 @@ router.post('/orders', orderController.createOrder);
  *       200:
  *         description: Order updated successfully.
  */
-router.patch('/orders/:id', orderController.updateOrder);
+router.patch('/:id', orderController.updateOrder);
 
 /**
  * @swagger
@@ -212,7 +212,7 @@ router.patch('/orders/:id', orderController.updateOrder);
  *       200:
  *         description: Order deleted successfully.
  */
-router.delete('/orders/:id', orderController.deleteOrder);
+router.delete('/:id', orderController.deleteOrder);
 
 /**
  * @swagger
@@ -246,7 +246,7 @@ router.delete('/orders/:id', orderController.deleteOrder);
  *       201:
  *         description: Order item created successfully.
  */
-router.post("/orders/order-item", orderController.createOrderItem);
+router.post("/order-item", orderController.createOrderItem);
 
 /**
  * @swagger
@@ -266,7 +266,7 @@ router.post("/orders/order-item", orderController.createOrderItem);
  *       200:
  *         description: List of order items for the given order.
  */
-router.get('/orders/items/by-order/:order_id', orderController.getOrderItemsByOrderId);
+router.get('/items/by-order/:order_id', orderController.getOrderItemsByOrderId);
 
 /**
  * @swagger

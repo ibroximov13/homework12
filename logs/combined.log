@@ -20,3 +20,9 @@
 2025-03-21 09:32:13 [INFO]: category create with ID: 3
 2025-03-21 09:43:13 [INFO]: category create with ID: 4
 2025-03-21 10:17:55 [INFO]: fetch all regions
+2025-03-21 11:27:42 [INFO]: Fetched 0 categories
+2025-03-21 11:27:55 [INFO]: category create with ID: 1
+2025-03-21 11:29:19 [INFO]: product create
+2025-03-21 11:32:44 [INFO]: All comments fetche
+2025-03-21 12:26:35 [INFO]: order create
+2025-03-21 12:28:24 [INFO]: order item created!
