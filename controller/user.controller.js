@@ -68,7 +68,7 @@ async function verifyOtp(req, res) {
         return res.status(400).send(error.details[0].message);
     }
     let { phone, email, otp } = value;
-    const secret = (phone || email) + "soz";
+    const secret = (phone + email) + "soz";
     const isValid = totp.verify({ token: otp, secret });
 
     if (isValid) {
@@ -84,7 +84,7 @@ async function register(req, res) {
         if (error) {
             return res.status(400).send(error.details[0].message);
         }
-        const { fullName, year, phone, email, password, region_id, role } = value;
+        const { phone, password, role, ...rest } = value;
 
         if (role && (role.toUpperCase() === "ADMIN" || role.toUpperCase() === "SUPERADMIN")) {
             return res.status(403).send({ message: "Siz bu rolni tanlay olmaysiz!" });
@@ -97,12 +97,13 @@ async function register(req, res) {
 
         let hashedPassword = bcrypt.hashSync(password, 10);
         let newUser = await User.create({
-            fullName, year, phone, email,
-            password: hashedPassword, region_id,
-            role
+            ...rest, 
+            phone: phone,
+            password: hashedPassword,
+            role: role
         });
 
-        res.status(201).json({ user: newUser });
+        res.status(201).send(newUser);
     } catch (error) {
         console.error(error);
         return res.status(500).send({ message: "Internal Server Error" });
@@ -195,7 +196,14 @@ async function getAllUsers(req, res) {
             limit: limit,
             offset: offset,
             order: [[column, order]],
-            include: [{model: Region}]
+            include: [
+                {
+                    model: Region
+                }
+            ],
+            attributes: {
+                exclude: ["region_id"]
+            }
         });
         res.status(200).send(user)
     } catch (error) {

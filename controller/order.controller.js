@@ -173,4 +173,19 @@ exports.createOrderItem = async(req, res) => {
         logger.error(err.message);
         res.status(500).json({ error: err.message });
     }
-}
+};
+
+// exports.getMyOrder = async(req, res) => {
+//     try {
+//         let {id} = req.params
+//         let order = await Order.findAll({
+//             where: {
+//                 order_id: id
+//             },
+//             include: [Product, OrderItem]
+//         })
+//     } catch (error) {
+//         logger.error(err.message);
+//         res.status(500).json({ error: err.message});
+//     }
+// }

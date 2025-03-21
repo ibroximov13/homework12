@@ -9,3 +9,4 @@
 2025-03-20 12:38:09 [WARN]: error: "name" is required
 2025-03-20 12:38:18 [INFO]: region create
 2025-03-20 12:38:27 [INFO]: region create
+2025-03-21 06:04:53 [ERROR]: Unknown column 'comments' in 'field list'

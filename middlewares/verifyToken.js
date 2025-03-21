@@ -1,39 +1,36 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { User } = require("../model");
 
 dotenv.config();
 
-function verifyToken(req, res, next) {
+const verifyToken = async (req, res, next) => {
     try {
-        let header = req.header("Authorization");
-        if (!header) {
-            return res.status(401).send({ msg: "Authorization header not found" });
+        const header = req.header("Authorization");
+        if (!header || !header.startsWith("Bearer ")) {
+            return res.status(401).json({ msg: "Invalid or missing Authorization header" });
         }
 
-        let [_, token] = header.split(" ");
+        const token = header.split(" ")[1];
         if (!token) {
-            return res.status(401).send({ msg: "Empty token" });
+            return res.status(401).json({ msg: "Empty token" });
         }
 
-        let accessSecret = process.env.accessKey || "access-secret";
-        let data = jwt.verify(token, accessSecret);
+        const accessSecret = process.env.JWT_SECRET || "nimadir2";
+        const data = jwt.verify(token, accessSecret);
 
-        User.findByPk(data.id)
-            .then((user) => {
-                if (!user) {
-                    return res.status(401).json({ message: "Not allowed..." });
-                }
+        console.log(data);
+        const user = await User.findByPk(data.id);
+        console.log(user);
+        if (!user) {
+            return res.status(401).json({ msg: "Not allowed" });
+        }
 
-                req.user = data;
-                next();
-            })
-            .catch((err) => {
-                return res.status(500).json({ msg: "Server error", error: err.message });
-            });
-
+        req.user = user;
+        next();
     } catch (error) {
-        res.status(401).send({ msg: "Invalid token" });
+        return res.status(500).json({ msg: "Server error", error: error.message });
     }
-}
+};
 
 module.exports = verifyToken;

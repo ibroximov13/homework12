@@ -19,7 +19,7 @@ async function initData() {
         if (!adminExists) {
             await User.create({
                 fullName: "Admin User",
-                year: "2000-01-01",
+                year: "2000",
                 phone: "+998901234567",
                 email: "admin@example.com",
                 password: bcrypt.hashSync("admin123", 10),
