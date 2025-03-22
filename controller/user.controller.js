@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer')
 const jwt = require("jsonwebtoken")
 const dotenv = require("dotenv");
 const { User, Region } = require("../model");
-const { createUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate, patchUserValidate } = require("../validation/user.validation");
+const { createUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate, patchUserValidate, updateMyProfileValidate } = require("../validation/user.validation");
 const { Op } = require("sequelize");
 dotenv.config()
 
@@ -284,7 +284,7 @@ async function getMeProfile(req, res) {
         const userId = req.user.id;
         const user = await User.findOne({
             where: { id: userId },
-            attributes: ["id", "fullName", "email", "phone"]
+            attributes: ["id", "fullName", "email", "phone", "photo"]
         });
 
         if (!user) {
@@ -296,8 +296,41 @@ async function getMeProfile(req, res) {
         console.error("Error fetching user profile:", error);
         res.status(500).json({ error: "Internal server error" });
     }
+};
+
+async function updateMyProfile(req, res) {
+    try {
+        let {error, value} = updateMyProfileValidate(req.body);
+        if (error) {
+            return res.status(400).send(error.details[0].message);
+        }
+        const userId = req.user.id;
+        const user = await User.findOne({
+            where: { id: userId },
+            attributes: ["id", "fullName", "email", "password", "photo"]
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "Foydalanuvchi topilmadi" });
+        }
+
+        let { fullName, photo, email, password } = value;
+
+        let updatedData = { fullName, email, photo };
+
+        if (password) {
+            updatedData.password = bcrypt.hashSync(password, 10);
+        }
+
+        await user.update(updatedData);
+
+        res.json({ message: "Profile successfully updated", user });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Ichki server xatosi" });
+    }
 }
 
 
-
-module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser, uploadImage, createSuperAdmin, getMeProfile }
+module.exports = { findUser, sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, getAllUsers, updateUser, deleteUser, uploadImage, createSuperAdmin, getMeProfile, updateMyProfile }

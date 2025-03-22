@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, createSuperAdmin, getAllUsers, updateUser, deleteUser, getMeProfile } = require("../controller/user.controller");
+const { sendOtp, verifyOtp, register, uploadImage, refreshToken, loginUser, createSuperAdmin, getAllUsers, updateUser, deleteUser, getMeProfile, updateMyProfile } = require("../controller/user.controller");
 const upload = require("../multer/user.multer");
 const verifyTokenAndRole = require("../middlewares/verifyTokenAndRole");
 
@@ -295,7 +295,7 @@ router.get("/", getAllUsers);
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               fullName:
  *                 type: string
  *     responses:
  *       200:
@@ -471,11 +471,71 @@ router.post("/create-superadmin", verifyTokenAndRole(['ADMIN']), createSuperAdmi
  *       500:
  *         description: Internal Server Error
  */
-router.get(
-    "/me",
-    verifyTokenAndRole(["USER", "ADMIN", "SUPERADMIN", "SELLER"]),
-    getMeProfile
-  );
+router.get("/me", verifyTokenAndRole(["USER", "ADMIN", "SUPERADMIN", "SELLER"]), getMeProfile);
+
+/**
+ * @swagger
+ * /users/me/update:
+ *   patch:
+ *     summary: "Foydalanuvchi profilini yangilash"
+ *     description: "Foydalanuvchi o‘z profilini yangilaydi. Bearer Token talab qilinadi."
+ *     security:
+ *       - BearerAuth: []
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: "Ali Valiyev"
+ *               email:
+ *                 type: string
+ *                 example: "ali@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "newPassword123"
+ *               photo:
+ *                 type: string
+ *                 example: "https://example.com/photo.jpg"
+ *     responses:
+ *       200:
+ *         description: "Profil muvaffaqiyatli yangilandi"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Profile successfully updated"
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     fullName:
+ *                       type: string
+ *                       example: "Ali Valiyev"
+ *                     email:
+ *                       type: string
+ *                       example: "ali@example.com"
+ *                     photo:
+ *                       type: string
+ *                       example: "https://example.com/photo.jpg"
+ *       400:
+ *         description: "Yaroqsiz ma'lumotlar yuborildi"
+ *       401:
+ *         description: "Token yaroqsiz yoki yo'q"
+ *       500:
+ *         description: "Ichki server xatosi"
+ */
+router.patch("/me/update", verifyTokenAndRole(['USER', 'ADMIN', 'SUPERADMIN', 'SELLER']), updateMyProfile);
 
 module.exports = router;
   

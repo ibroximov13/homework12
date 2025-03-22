@@ -61,4 +61,14 @@ const refreshTokenValidate = (data) => {
   return schema.validate(data)
 }
 
-module.exports = { createUserValidate, patchUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate };
+const updateMyProfileValidate = (data) => {
+  const schema = Joi.object({
+    fullName: Joi.string().min(2).max(50).optional(),
+    email: Joi.string().email().optional(),
+    password: Joi.string().min(6).optional(),
+    photo: Joi.string().optional()
+  });
+  return schema.validate(data);
+}
+
+module.exports = { createUserValidate, patchUserValidate, sendOtpValidate, verifyOtpValidate, userLoginValidate, refreshTokenValidate, updateMyProfileValidate };
